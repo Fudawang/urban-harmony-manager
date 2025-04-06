@@ -14,6 +14,8 @@ import MemberManagement from "./components/MemberManagement";
 import MeetingManagement from "./components/MeetingManagement";
 import BoardManagement from "./components/BoardManagement";
 import ProposalManagement from "./components/ProposalManagement";
+import Reports from "./components/Reports";
+import Settings from "./components/Settings";
 import AuthLayout from "./components/AuthLayout";
 
 const queryClient = new QueryClient();
@@ -42,8 +44,8 @@ const App = () => (
                   <Route path="/meetings" element={<MeetingManagement />} />
                   <Route path="/board" element={<BoardManagement />} />
                   <Route path="/proposals" element={<ProposalManagement />} />
-                  <Route path="/reports" element={<div className="page-container"><h1 className="page-title">報表輸出</h1><p>此功能正在開發中</p></div>} />
-                  <Route path="/settings" element={<div className="page-container"><h1 className="page-title">系統設定</h1><p>此功能正在開發中</p></div>} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
                 
                 {/* Visitor routes */}
