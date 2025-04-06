@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,90 +29,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from 'sonner';
 
-// Mock member data
-const mockMembers = [
-  {
-    id: '1',
-    memberId: 'M001',
-    idNumber: 'A123456789',
-    name: '王大明',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '123-4',
-    landShare: '1/4',
-    landArea: '120.5',
-    buildingNumber: 'B-567',
-    buildingShare: '1/4',
-    buildingArea: '85.3',
-  },
-  {
-    id: '2',
-    memberId: 'M002',
-    idNumber: 'B234567890',
-    name: '李小華',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '123-5',
-    landShare: '1/4',
-    landArea: '125.8',
-    buildingNumber: 'B-568',
-    buildingShare: '1/4',
-    buildingArea: '90.2',
-  },
-  {
-    id: '3',
-    memberId: 'M003',
-    idNumber: 'C345678901',
-    name: '張美玲',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '124-1',
-    landShare: '1/2',
-    landArea: '200.3',
-    buildingNumber: 'B-570',
-    buildingShare: '1/2',
-    buildingArea: '150.7',
-  },
-  {
-    id: '4',
-    memberId: 'M004',
-    idNumber: 'D456789012',
-    name: '陳志明',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '二小段',
-    landNumber: '235-2',
-    landShare: '1/1',
-    landArea: '320.1',
-    buildingNumber: 'B-612',
-    buildingShare: '1/1',
-    buildingArea: '275.4',
-  },
-  {
-    id: '5',
-    memberId: 'M005',
-    idNumber: 'E567890123',
-    name: '林雅芳',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '二小段',
-    landNumber: '236-3',
-    landShare: '1/3',
-    landArea: '110.5',
-    buildingNumber: 'B-615',
-    buildingShare: '1/3',
-    buildingArea: '75.8',
-  },
-];
+import MemberFormDialog from './member/MemberFormDialog';
+import DeleteMemberDialog from './member/DeleteMemberDialog';
+import { 
+  Member,
+  getAllMembers, 
+  createMember, 
+  updateMember, 
+  deleteMember, 
+  searchMembers 
+} from '@/services/memberService';
 
 // Format member ID card number for privacy
 const formatIdNumber = (idNumber: string) => {
@@ -125,23 +53,123 @@ const formatName = (name: string) => {
 };
 
 const MemberManagement: React.FC = () => {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Filter members based on search term and active tab
-  const filteredMembers = mockMembers.filter(member => {
-    const matchesSearch = 
-      member.memberId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.landNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.buildingNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'section1') return matchesSearch && member.subSection === '一小段';
-    if (activeTab === 'section2') return matchesSearch && member.subSection === '二小段';
-    
-    return matchesSearch;
-  });
+  // Dialog state
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | undefined>(undefined);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  // Fetch members on component mount
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  // Filter members when search term or active tab changes
+  useEffect(() => {
+    filterMembers();
+  }, [searchTerm, activeTab, members]);
+
+  const fetchMembers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllMembers();
+      setMembers(data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      toast.error('無法載入會員資料');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filterMembers = async () => {
+    try {
+      if (searchTerm === '') {
+        // If no search term, filter only by tab
+        let results = members;
+        if (activeTab === 'section1') {
+          results = members.filter(member => member.subSection === '一小段');
+        } else if (activeTab === 'section2') {
+          results = members.filter(member => member.subSection === '二小段');
+        }
+        setFilteredMembers(results);
+      } else {
+        // If search term exists, use search function
+        const results = await searchMembers(searchTerm, activeTab);
+        setFilteredMembers(results);
+      }
+    } catch (error) {
+      console.error('Error filtering members:', error);
+    }
+  };
+
+  const handleAddMember = async (data: Omit<Member, 'id'>) => {
+    try {
+      await createMember(data);
+      await fetchMembers();
+      toast.success('會員已成功新增');
+    } catch (error) {
+      console.error('Error adding member:', error);
+      toast.error('新增會員失敗');
+      throw error;
+    }
+  };
+
+  const handleEditMember = async (data: Omit<Member, 'id'>) => {
+    if (!selectedMember) return;
+    try {
+      await updateMember(selectedMember.id, data);
+      await fetchMembers();
+      toast.success('會員資料已更新');
+    } catch (error) {
+      console.error('Error updating member:', error);
+      toast.error('更新會員資料失敗');
+      throw error;
+    }
+  };
+
+  const handleDeleteMember = async () => {
+    if (!selectedMember) return;
+    try {
+      await deleteMember(selectedMember.id);
+      await fetchMembers();
+      toast.success('會員已成功刪除');
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error('刪除會員失敗');
+      throw error;
+    }
+  };
+
+  const openEditDialog = (member: Member) => {
+    setSelectedMember(member);
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (member: Member) => {
+    setSelectedMember(member);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const openViewDialog = (member: Member) => {
+    setSelectedMember(member);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleExport = () => {
+    toast.info('匯出功能開發中');
+  };
+
+  const handleImport = () => {
+    toast.info('匯入功能開發中');
+  };
 
   return (
     <div className="space-y-6">
@@ -149,7 +177,7 @@ const MemberManagement: React.FC = () => {
         <h1 className="text-3xl font-bold tracking-tight">會員管理</h1>
         
         <div className="flex flex-wrap gap-2">
-          <Button className="bg-urban-600 hover:bg-urban-700">
+          <Button className="bg-urban-600 hover:bg-urban-700" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             新增會員
           </Button>
@@ -162,18 +190,18 @@ const MemberManagement: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
                 <FileText className="h-4 w-4 mr-2" />
                 匯出 PDF
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
                 <FileText className="h-4 w-4 mr-2" />
                 匯出 Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleImport}>
             <Upload className="h-4 w-4 mr-2" />
             匯入資料
           </Button>
@@ -230,7 +258,13 @@ const MemberManagement: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24">
+                      正在載入會員資料...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredMembers.length > 0 ? (
                   filteredMembers.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.memberId}</TableCell>
@@ -241,13 +275,26 @@ const MemberManagement: React.FC = () => {
                       <TableCell>{member.buildingShare}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openViewDialog(member)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openEditDialog(member)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive"
+                            onClick={() => openDeleteDialog(member)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -266,6 +313,39 @@ const MemberManagement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Add Member Dialog */}
+      <MemberFormDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSubmit={handleAddMember}
+      />
+      
+      {/* Edit Member Dialog */}
+      <MemberFormDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        member={selectedMember}
+        onSubmit={handleEditMember}
+      />
+      
+      {/* View Member Dialog is the same form but readonly */}
+      <MemberFormDialog
+        isOpen={isViewDialogOpen}
+        onClose={() => setIsViewDialogOpen(false)}
+        member={selectedMember}
+        onSubmit={async () => {}}
+      />
+      
+      {/* Delete Member Dialog */}
+      {selectedMember && (
+        <DeleteMemberDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDeleteMember}
+          memberName={selectedMember.name}
+        />
+      )}
     </div>
   );
 };
