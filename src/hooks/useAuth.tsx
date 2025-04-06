@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 type User = {
   id: string;

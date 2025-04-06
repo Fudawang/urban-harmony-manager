@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -328,9 +327,18 @@ const ProposalManagement: React.FC = () => {
                                   </span>
                                 </div>
                                 <Progress 
-                                  className="h-2" 
+                                  className="h-2 bg-secondary" 
                                   value={proposal.votes.landShareApproved} 
-                                  indicator={proposal.votes.landShareApproved >= 50 ? 'bg-green-500' : 'bg-orange-500'} 
+                                />
+                                <div className="flex justify-between text-xs">
+                                  <span>建物持分同意</span>
+                                  <span className="font-medium">
+                                    {proposal.votes.buildingShareApproved}%
+                                  </span>
+                                </div>
+                                <Progress 
+                                  className="h-2 bg-secondary" 
+                                  value={proposal.votes.buildingShareApproved} 
                                 />
                               </>
                             )}
