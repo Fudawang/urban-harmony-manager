@@ -17,6 +17,7 @@ import BoardManagement from "./components/BoardManagement";
 import ProposalManagement from "./components/ProposalManagement";
 import Reports from "./components/Reports";
 import Settings from "./components/Settings";
+import DatabaseManagement from "./components/DatabaseManagement";
 import AuthLayout from "./components/AuthLayout";
 
 // Create the queryClient outside of the component
@@ -50,6 +51,7 @@ function App() {
                       <Route path="/proposals" element={<ProposalManagement />} />
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/database" element={<DatabaseManagement />} />
                     </Route>
                     
                     {/* Visitor routes */}
