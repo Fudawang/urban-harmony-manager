@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { LogIn, Lock, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -14,12 +15,20 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!username || !password) {
+      toast.error('請輸入帳號和密碼');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       await login(username, password);
+      // No need for toast here, the login function already does that
     } catch (error) {
       console.error('Login failed:', error);
+      // Error toast is already handled in the login function
     } finally {
       setIsLoading(false);
     }
