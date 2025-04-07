@@ -12,7 +12,8 @@ import {
   Trash2, 
   Eye, 
   FileText,
-  Filter
+  Filter,
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   Table,
@@ -29,12 +30,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { toast } from 'sonner';
 
 import MemberFormDialog from './member/MemberFormDialog';
 import DeleteMemberDialog from './member/DeleteMemberDialog';
 import { 
   Member,
+  PaginatedResponse,
   getAllMembers, 
   createMember, 
   updateMember, 
@@ -53,8 +64,13 @@ const formatName = (name: string) => {
 };
 
 const MemberManagement: React.FC = () => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  
   const [members, setMembers] = useState<Member[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -65,22 +81,27 @@ const MemberManagement: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | undefined>(undefined);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
-  // Fetch members on component mount
+  // Fetch members on component mount and when pagination, search, or tab changes
   useEffect(() => {
     fetchMembers();
-  }, []);
-
-  // Filter members when search term or active tab changes
-  useEffect(() => {
-    filterMembers();
-  }, [searchTerm, activeTab, members]);
+  }, [currentPage, activeTab, searchTerm]);
 
   const fetchMembers = async () => {
     setIsLoading(true);
     try {
-      const data = await getAllMembers();
-      setMembers(data);
+      let response: PaginatedResponse<Member>;
+      
+      if (searchTerm === '' && activeTab === 'all') {
+        response = await getAllMembers(currentPage, pageSize);
+      } else {
+        response = await searchMembers(searchTerm, activeTab, currentPage, pageSize);
+      }
+      
+      setMembers(response.data);
+      setTotalPages(response.totalPages);
+      setTotalItems(response.total);
     } catch (error) {
       console.error('Error fetching members:', error);
       toast.error('無法載入會員資料');
@@ -89,32 +110,12 @@ const MemberManagement: React.FC = () => {
     }
   };
 
-  const filterMembers = async () => {
-    try {
-      if (searchTerm === '') {
-        // If no search term, filter only by tab
-        let results = members;
-        if (activeTab === 'section1') {
-          results = members.filter(member => member.subSection === '一小段');
-        } else if (activeTab === 'section2') {
-          results = members.filter(member => member.subSection === '二小段');
-        }
-        setFilteredMembers(results);
-      } else {
-        // If search term exists, use search function
-        const results = await searchMembers(searchTerm, activeTab);
-        setFilteredMembers(results);
-      }
-    } catch (error) {
-      console.error('Error filtering members:', error);
-    }
-  };
-
   const handleAddMember = async (data: Omit<Member, 'id'>) => {
     try {
       await createMember(data);
-      await fetchMembers();
       toast.success('會員已成功新增');
+      setCurrentPage(1); // Reset to first page after adding
+      await fetchMembers();
     } catch (error) {
       console.error('Error adding member:', error);
       toast.error('新增會員失敗');
@@ -126,8 +127,8 @@ const MemberManagement: React.FC = () => {
     if (!selectedMember) return;
     try {
       await updateMember(selectedMember.id, data);
-      await fetchMembers();
       toast.success('會員資料已更新');
+      await fetchMembers();
     } catch (error) {
       console.error('Error updating member:', error);
       toast.error('更新會員資料失敗');
@@ -139,13 +140,28 @@ const MemberManagement: React.FC = () => {
     if (!selectedMember) return;
     try {
       await deleteMember(selectedMember.id);
-      await fetchMembers();
       toast.success('會員已成功刪除');
+      await fetchMembers();
     } catch (error) {
       console.error('Error deleting member:', error);
       toast.error('刪除會員失敗');
       throw error;
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when search changes
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page when tab changes
   };
 
   const openEditDialog = (member: Member) => {
@@ -169,6 +185,90 @@ const MemberManagement: React.FC = () => {
 
   const handleImport = () => {
     toast.info('匯入功能開發中');
+  };
+
+  // Generate pagination links
+  const renderPaginationLinks = () => {
+    const links = [];
+    const maxDisplayedPages = 5; // Maximum number of page links to display
+    
+    let startPage: number;
+    let endPage: number;
+    
+    if (totalPages <= maxDisplayedPages) {
+      // If total pages are less than max, show all pages
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      // Calculate start and end pages
+      const maxPagesBeforeCurrentPage = Math.floor(maxDisplayedPages / 2);
+      const maxPagesAfterCurrentPage = Math.ceil(maxDisplayedPages / 2) - 1;
+      
+      if (currentPage <= maxPagesBeforeCurrentPage) {
+        // Current page near the start
+        startPage = 1;
+        endPage = maxDisplayedPages;
+      } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+        // Current page near the end
+        startPage = totalPages - maxDisplayedPages + 1;
+        endPage = totalPages;
+      } else {
+        // Current page somewhere in the middle
+        startPage = currentPage - maxPagesBeforeCurrentPage;
+        endPage = currentPage + maxPagesAfterCurrentPage;
+      }
+    }
+    
+    // Add first page with ellipsis if needed
+    if (startPage > 1) {
+      links.push(
+        <PaginationItem key="first">
+          <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      if (startPage > 2) {
+        links.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+    }
+    
+    // Add numbered page links
+    for (let i = startPage; i <= endPage; i++) {
+      links.push(
+        <PaginationItem key={i}>
+          <PaginationLink onClick={() => handlePageChange(i)} isActive={currentPage === i}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Add last page with ellipsis if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        links.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      
+      links.push(
+        <PaginationItem key="last">
+          <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return links;
   };
 
   return (
@@ -218,25 +318,34 @@ const MemberManagement: React.FC = () => {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="搜尋會員編號、姓名、地號..."
+                placeholder="搜尋會員編號、姓名、地址..."
                 className="pl-8"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearch}
               />
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                篩選
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    進階篩選
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem>依縣市篩選</DropdownMenuItem>
+                  <DropdownMenuItem>依區域篩選</DropdownMenuItem>
+                  <DropdownMenuItem>依持分比例篩選</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="text-sm text-muted-foreground">
-                總計 {filteredMembers.length} 筆資料
+                總計 {totalItems} 筆資料
               </div>
             </div>
           </div>
           
-          <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
+          <Tabs defaultValue="all" className="mb-6" onValueChange={handleTabChange}>
             <TabsList>
               <TabsTrigger value="all">全部</TabsTrigger>
               <TabsTrigger value="section1">一小段</TabsTrigger>
@@ -250,6 +359,7 @@ const MemberManagement: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-[100px]">會員編號</TableHead>
                   <TableHead>姓名</TableHead>
+                  <TableHead>地址</TableHead>
                   <TableHead>地號</TableHead>
                   <TableHead>土地持分</TableHead>
                   <TableHead>建號</TableHead>
@@ -260,15 +370,16 @@ const MemberManagement: React.FC = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">
+                    <TableCell colSpan={8} className="text-center h-24">
                       正在載入會員資料...
                     </TableCell>
                   </TableRow>
-                ) : filteredMembers.length > 0 ? (
-                  filteredMembers.map((member) => (
+                ) : members.length > 0 ? (
+                  members.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">{member.memberId}</TableCell>
                       <TableCell>{formatName(member.name)}</TableCell>
+                      <TableCell>{`${member.city}${member.district}`}</TableCell>
                       <TableCell>{member.landNumber}</TableCell>
                       <TableCell>{member.landShare}</TableCell>
                       <TableCell>{member.buildingNumber}</TableCell>
@@ -303,7 +414,7 @@ const MemberManagement: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
                       沒有找到符合條件的會員資料
                     </TableCell>
                   </TableRow>
@@ -311,6 +422,32 @@ const MemberManagement: React.FC = () => {
               </TableBody>
             </Table>
           </div>
+          
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      aria-disabled={currentPage === 1}
+                    />
+                  </PaginationItem>
+                  
+                  {renderPaginationLinks()}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      aria-disabled={currentPage === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -335,6 +472,7 @@ const MemberManagement: React.FC = () => {
         onClose={() => setIsViewDialogOpen(false)}
         member={selectedMember}
         onSubmit={async () => {}}
+        readonly={true}
       />
       
       {/* Delete Member Dialog */}

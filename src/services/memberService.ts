@@ -2,89 +2,41 @@
 // This is a mock service that simulates database operations
 // In a real application, this would interact with an actual database
 
-// Mock member data
-let mockMembers = [
-  {
-    id: '1',
-    memberId: 'M001',
-    idNumber: 'A123456789',
-    name: '王大明',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '123-4',
-    landShare: '1/4',
-    landArea: '120.5',
-    buildingNumber: 'B-567',
-    buildingShare: '1/4',
-    buildingArea: '85.3',
-  },
-  {
-    id: '2',
-    memberId: 'M002',
-    idNumber: 'B234567890',
-    name: '李小華',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '123-5',
-    landShare: '1/4',
-    landArea: '125.8',
-    buildingNumber: 'B-568',
-    buildingShare: '1/4',
-    buildingArea: '90.2',
-  },
-  {
-    id: '3',
-    memberId: 'M003',
-    idNumber: 'C345678901',
-    name: '張美玲',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '一小段',
-    landNumber: '124-1',
-    landShare: '1/2',
-    landArea: '200.3',
-    buildingNumber: 'B-570',
-    buildingShare: '1/2',
-    buildingArea: '150.7',
-  },
-  {
-    id: '4',
-    memberId: 'M004',
-    idNumber: 'D456789012',
-    name: '陳志明',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '二小段',
-    landNumber: '235-2',
-    landShare: '1/1',
-    landArea: '320.1',
-    buildingNumber: 'B-612',
-    buildingShare: '1/1',
-    buildingArea: '275.4',
-  },
-  {
-    id: '5',
-    memberId: 'M005',
-    idNumber: 'E567890123',
-    name: '林雅芳',
-    city: '台北市',
-    district: '中山區',
-    section: '中山段',
-    subSection: '二小段',
-    landNumber: '236-3',
-    landShare: '1/3',
-    landArea: '110.5',
-    buildingNumber: 'B-615',
-    buildingShare: '1/3',
-    buildingArea: '75.8',
-  },
-];
+// Generate 80 mock members
+const generateMockMembers = () => {
+  const members = [];
+  const sections = ['一小段', '二小段'];
+  const cities = ['台北市', '新北市', '桃園市', '新竹市'];
+  const districts = ['中山區', '信義區', '板橋區', '中壢區', '東區'];
+  
+  for (let i = 1; i <= 80; i++) {
+    const sectionIndex = i % 2;
+    const section = sections[sectionIndex];
+    const cityIndex = i % cities.length;
+    const districtIndex = i % districts.length;
+    
+    const idFormatted = i.toString().padStart(3, '0');
+    members.push({
+      id: i.toString(),
+      memberId: `M${idFormatted}`,
+      idNumber: `A${Math.floor(100000000 + Math.random() * 900000000)}`,
+      name: `會員${idFormatted}`,
+      city: cities[cityIndex],
+      district: districts[districtIndex],
+      section: '中山段',
+      subSection: section,
+      landNumber: `${100 + i}-${i % 10}`,
+      landShare: `1/${(i % 4) + 1}`,
+      landArea: (100 + Math.random() * 300).toFixed(1),
+      buildingNumber: `B-${500 + i}`,
+      buildingShare: `1/${(i % 4) + 1}`,
+      buildingArea: (70 + Math.random() * 200).toFixed(1),
+    });
+  }
+  return members;
+};
+
+let mockMembers = generateMockMembers();
 
 // Type for member
 export type Member = {
@@ -104,11 +56,34 @@ export type Member = {
   buildingArea: string;
 };
 
-// Get all members
-export const getAllMembers = async (): Promise<Member[]> => {
+// Type for pagination
+export type PaginatedResponse<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+// Get all members with pagination
+export const getAllMembers = async (
+  page = 1, 
+  pageSize = 20
+): Promise<PaginatedResponse<Member>> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
-  return [...mockMembers];
+  
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const paginatedData = mockMembers.slice(start, end);
+  
+  return {
+    data: paginatedData,
+    total: mockMembers.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(mockMembers.length / pageSize)
+  };
 };
 
 // Get member by ID
@@ -160,23 +135,47 @@ export const deleteMember = async (id: string): Promise<void> => {
   mockMembers.splice(index, 1);
 };
 
-// Search members
-export const searchMembers = async (searchTerm: string, filter?: string): Promise<Member[]> => {
+// Enhanced search members with pagination, filtering and sorting
+export const searchMembers = async (
+  searchTerm = '', 
+  filter = 'all', 
+  page = 1, 
+  pageSize = 20
+): Promise<PaginatedResponse<Member>> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
+  // Filter the members based on search term and tab selection
   let results = mockMembers.filter(member => {
-    const matchesSearch = 
+    const matchesSearch = searchTerm === '' || 
       member.memberId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.landNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.buildingNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      member.buildingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.district.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (!filter || filter === 'all') return matchesSearch;
+    if (filter === 'all') return matchesSearch;
     if (filter === 'section1') return matchesSearch && member.subSection === '一小段';
     if (filter === 'section2') return matchesSearch && member.subSection === '二小段';
     
     return matchesSearch;
   });
   
-  return results;
+  // Calculate pagination
+  const total = results.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  
+  // Slice the data for the current page
+  const paginatedData = results.slice(start, end);
+  
+  return {
+    data: paginatedData,
+    total,
+    page,
+    pageSize,
+    totalPages
+  };
 };
+
