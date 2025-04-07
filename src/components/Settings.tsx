@@ -31,10 +31,12 @@ import {
   UserX
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAssociation } from '@/contexts/AssociationContext';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('association');
   const [saving, setSaving] = useState(false);
+  const { associationInfo, updateAssociationInfo } = useAssociation();
   
   const handleSave = () => {
     setSaving(true);
@@ -44,15 +46,6 @@ const Settings: React.FC = () => {
     }, 1000);
   };
 
-  const [associationInfo, setAssociationInfo] = useState({
-    name: '台北市士林區天母都市更新會',
-    president: '王大明',
-    phone: '02-12345678',
-    email: 'tianmu@urbanrenewal.org',
-    address: '台北市士林區天母西路18號',
-    foundingDate: '2020-06-15'
-  });
-
   const [users, setUsers] = useState([
     { id: 1, username: 'admin', role: 'admin', lastLogin: '2024-04-06 08:32:15' },
     { id: 2, username: 'visitor', role: 'visitor', lastLogin: '2024-04-05 14:21:45' },
@@ -60,10 +53,7 @@ const Settings: React.FC = () => {
   ]);
 
   const handleInputChange = (field: string, value: string) => {
-    setAssociationInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    updateAssociationInfo({ [field]: value });
   };
 
   const handleResetPassword = (userId: number) => {
@@ -169,6 +159,18 @@ const Settings: React.FC = () => {
                     type="date"
                     value={associationInfo.foundingDate}
                     onChange={(e) => handleInputChange('foundingDate', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="unifiedNumber" className="flex items-center gap-2">
+                    <Building size={16} />
+                    統一編號
+                  </Label>
+                  <Input 
+                    id="unifiedNumber" 
+                    value={associationInfo.unifiedNumber}
+                    onChange={(e) => handleInputChange('unifiedNumber', e.target.value)}
                   />
                 </div>
               </div>

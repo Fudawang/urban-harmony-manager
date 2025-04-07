@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, ClipboardList, User, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAssociation } from '@/contexts/AssociationContext';
 
 const StatCard = ({ 
   icon, 
@@ -38,6 +39,7 @@ const recentActivity = [
 
 const Dashboard: React.FC = () => {
   const { isAdmin, user } = useAuth();
+  const { associationInfo } = useAssociation();
 
   return (
     <div className="space-y-6">
@@ -87,32 +89,32 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">更新會名稱</p>
-                    <p className="font-medium">台北市中山區第一都市更新會</p>
+                    <p className="font-medium">{associationInfo.name}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">成立日期</p>
-                    <p className="font-medium">2022-03-15</p>
+                    <p className="font-medium">{associationInfo.foundingDate}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">理事長</p>
-                    <p className="font-medium">王大明</p>
+                    <p className="font-medium">{associationInfo.president}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">統一編號</p>
-                    <p className="font-medium">87654321</p>
+                    <p className="font-medium">{associationInfo.unifiedNumber}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">聯絡電話</p>
-                    <p className="font-medium">02-2345-6789</p>
+                    <p className="font-medium">{associationInfo.phone}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">電子郵件</p>
-                    <p className="font-medium">info@tpeurban1.org.tw</p>
+                    <p className="font-medium">{associationInfo.email}</p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">聯絡地址</p>
-                  <p className="font-medium">台北市中山區中山北路二段100號5樓</p>
+                  <p className="font-medium">{associationInfo.address}</p>
                 </div>
               </CardContent>
             </Card>
@@ -176,15 +178,15 @@ const Dashboard: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">更新會名稱</p>
-                  <p className="font-medium">台北市中山區第一都市更新會</p>
+                  <p className="font-medium">{associationInfo.name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">成立日期</p>
-                  <p className="font-medium">2022-03-15</p>
+                  <p className="font-medium">{associationInfo.foundingDate}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">聯絡地址</p>
-                  <p className="font-medium">台北市中山區中山北路二段100號5樓</p>
+                  <p className="font-medium">{associationInfo.address}</p>
                 </div>
               </div>
             </CardContent>

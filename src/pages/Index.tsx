@@ -7,10 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useAssociation } from '@/contexts/AssociationContext';
 
 const Index: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { associationInfo } = useAssociation();
   
   // If already authenticated, redirect to dashboard
   React.useEffect(() => {
@@ -55,9 +57,9 @@ const Index: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <Building2 className="h-5 w-5 text-urban-600 mt-0.5" />
                       <div>
-                        <div className="font-medium">台北市中山區第一都市更新會</div>
-                        <div className="text-sm text-muted-foreground">統一編號: 87654321</div>
-                        <div className="text-sm text-muted-foreground">成立日期: 2022-03-15</div>
+                        <div className="font-medium">{associationInfo.name}</div>
+                        <div className="text-sm text-muted-foreground">統一編號: {associationInfo.unifiedNumber}</div>
+                        <div className="text-sm text-muted-foreground">成立日期: {associationInfo.foundingDate}</div>
                       </div>
                     </div>
                     
@@ -65,7 +67,7 @@ const Index: React.FC = () => {
                       <MapPin className="h-5 w-5 text-urban-600 mt-0.5" />
                       <div>
                         <div className="font-medium">聯絡地址</div>
-                        <div className="text-muted-foreground">台北市中山區中山北路二段100號5樓</div>
+                        <div className="text-muted-foreground">{associationInfo.address}</div>
                       </div>
                     </div>
                     
@@ -73,7 +75,7 @@ const Index: React.FC = () => {
                       <Phone className="h-5 w-5 text-urban-600 mt-0.5" />
                       <div>
                         <div className="font-medium">聯絡電話</div>
-                        <div className="text-muted-foreground">02-2345-6789</div>
+                        <div className="text-muted-foreground">{associationInfo.phone}</div>
                       </div>
                     </div>
                     
@@ -81,7 +83,7 @@ const Index: React.FC = () => {
                       <Mail className="h-5 w-5 text-urban-600 mt-0.5" />
                       <div>
                         <div className="font-medium">電子郵件</div>
-                        <div className="text-muted-foreground">info@tpeurban1.org.tw</div>
+                        <div className="text-muted-foreground">{associationInfo.email}</div>
                       </div>
                     </div>
                   </div>
