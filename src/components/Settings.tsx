@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import { useForm } from "react-hook-form";
 import { useAssociation } from '@/contexts/AssociationContext';
 import { useToast } from '@/hooks/use-toast';
 import NewsManagement from './news/NewsManagement';
+import PublicInfoManagement from './PublicInfoManagement';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Settings as SettingsIcon, Newspaper, Globe } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -37,6 +40,11 @@ type FormData = z.infer<typeof formSchema>;
 const Settings = () => {
   const { associationInfo, updateAssociationInfo } = useAssociation();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // Get tab from URL or default to "basic"
+  const tab = searchParams.get('tab') || 'basic';
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -51,6 +59,24 @@ const Settings = () => {
     },
   });
 
+  // Update the URL when tab changes
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
+  
+  // Set form values when associationInfo changes
+  useEffect(() => {
+    form.reset({
+      name: associationInfo.name,
+      president: associationInfo.president,
+      phone: associationInfo.phone,
+      email: associationInfo.email,
+      address: associationInfo.address,
+      foundingDate: associationInfo.foundingDate,
+      unifiedNumber: associationInfo.unifiedNumber,
+    });
+  }, [associationInfo, form]);
+
   function onSubmit(values: FormData) {
     updateAssociationInfo(values);
     toast({
@@ -63,10 +89,20 @@ const Settings = () => {
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-urban-800">系統設定</h1>
 
-      <Tabs defaultValue="basic" className="max-w-4xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="basic">基本設定</TabsTrigger>
-          <TabsTrigger value="news">最新消息管理</TabsTrigger>
+      <Tabs value={tab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic" className="flex items-center gap-1">
+            <SettingsIcon className="h-4 w-4" />
+            基本設定
+          </TabsTrigger>
+          <TabsTrigger value="news" className="flex items-center gap-1">
+            <Newspaper className="h-4 w-4" />
+            最新消息管理
+          </TabsTrigger>
+          <TabsTrigger value="public-info" className="flex items-center gap-1">
+            <Globe className="h-4 w-4" />
+            公開資訊管理
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="basic" className="pt-4">
@@ -184,6 +220,10 @@ const Settings = () => {
         
         <TabsContent value="news" className="pt-4">
           <NewsManagement />
+        </TabsContent>
+        
+        <TabsContent value="public-info" className="pt-4">
+          <PublicInfoManagement />
         </TabsContent>
       </Tabs>
     </div>

@@ -17,6 +17,7 @@ export interface AssociationInfo {
   address: string;
   foundingDate: string;
   unifiedNumber?: string;
+  news?: NewsItem[]; // Add news to associationInfo for easier access
 }
 
 interface AssociationContextType {
@@ -91,6 +92,12 @@ export const AssociationProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [associationInfo, setAssociationInfo] = useState<AssociationInfo>(defaultAssociationInfo);
   const [news, setNews] = useState<NewsItem[]>(defaultNews);
 
+  // Ensure associationInfo has the latest news data
+  const associationInfoWithNews = {
+    ...associationInfo,
+    news: news
+  };
+
   const updateAssociationInfo = (info: Partial<AssociationInfo>) => {
     setAssociationInfo(prevInfo => ({
       ...prevInfo,
@@ -113,7 +120,7 @@ export const AssociationProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   return (
     <AssociationContext.Provider value={{ 
-      associationInfo, 
+      associationInfo: associationInfoWithNews, 
       updateAssociationInfo, 
       news, 
       addNews, 
