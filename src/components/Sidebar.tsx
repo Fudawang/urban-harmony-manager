@@ -10,7 +10,8 @@ import {
   FileText, 
   Settings, 
   LogIn,
-  ChevronLeft
+  ChevronLeft,
+  Newspaper
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -77,8 +78,6 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label }) => {
 const Sidebar: React.FC = () => {
   const { isAdmin, isAuthenticated } = useAuth();
   const { isOpen, toggleSidebar } = useSidebar();
-  
-  if (!isAuthenticated) return null;
 
   return (
     <>
@@ -108,7 +107,12 @@ const Sidebar: React.FC = () => {
           </Button>
           
           <nav className="space-y-1">
-            <NavItem to="/dashboard" icon={<Home size={18} />} label="首頁" />
+            {/* Public link - visible to everyone */}
+            <NavItem to="/public-info" icon={<Newspaper size={18} />} label="公開資訊" />
+            
+            {isAuthenticated && (
+              <NavItem to="/dashboard" icon={<Home size={18} />} label="首頁" />
+            )}
             
             {isAdmin() && (
               <>
@@ -119,10 +123,6 @@ const Sidebar: React.FC = () => {
                 <NavItem to="/reports" icon={<FileText size={18} />} label="報表輸出" />
                 <NavItem to="/settings" icon={<Settings size={18} />} label="系統設定" />
               </>
-            )}
-            
-            {!isAdmin() && (
-              <NavItem to="/public-info" icon={<FileText size={18} />} label="公開資訊" />
             )}
           </nav>
         </div>

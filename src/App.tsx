@@ -20,6 +20,7 @@ import Reports from "./components/Reports";
 import Settings from "./components/Settings";
 import DatabaseManagement from "./components/DatabaseManagement";
 import AuthLayout from "./components/AuthLayout";
+import PublicInfo from "./pages/PublicInfo";
 
 // Create the queryClient outside of the component
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ function App() {
                     <SonnerToaster position="top-right" />
                     <Routes>
                       <Route path="/" element={<Index />} />
+                      <Route path="/public-info" element={<PublicInfo />} />
                       
                       {/* Protected routes */}
                       <Route element={<AuthLayout />}>
@@ -54,11 +56,6 @@ function App() {
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/database" element={<DatabaseManagement />} />
-                      </Route>
-                      
-                      {/* Visitor routes */}
-                      <Route element={<AuthLayout />}>
-                        <Route path="/public-info" element={<div className="page-container"><h1 className="page-title">公開資訊</h1><p>此功能正在開發中</p></div>} />
                       </Route>
                       
                       {/* Catch-all route */}

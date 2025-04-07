@@ -2,17 +2,18 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import LoginForm from '@/components/LoginForm';
-import { Building2, Phone, Mail, Calendar, MapPin, Users, History } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Building2, Phone, Mail, Calendar, MapPin, Users, History, Newspaper } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAssociation } from '@/contexts/AssociationContext';
+import NewsList from '@/components/news/NewsList';
 
 const Index: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { associationInfo } = useAssociation();
+  const { associationInfo, news } = useAssociation();
   
   // If already authenticated, redirect to dashboard
   React.useEffect(() => {
@@ -21,10 +22,16 @@ const Index: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Get only the latest 3 public news items
+  const latestPublicNews = news
+    .filter(item => item.isPublic)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-urban-50 to-white">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-12 items-start">
           <div className="order-2 md:order-1">
             <div className="space-y-6">
               <div>
@@ -87,6 +94,23 @@ const Index: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center">
+                      <Newspaper className="h-5 w-5 mr-2" />
+                      最新消息
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/public-info')}>
+                      查看更多
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <NewsList news={latestPublicNews} showOnlyPublic={true} />
                 </CardContent>
               </Card>
             </div>
