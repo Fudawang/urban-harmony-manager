@@ -64,6 +64,7 @@ interface MemberFormDialogProps {
   onClose: () => void;
   member?: Member;
   onSubmit: (data: MemberFormValues) => Promise<void>;
+  readonly?: boolean; // Add readonly prop to support view mode
 }
 
 const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
@@ -71,6 +72,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
   onClose,
   member,
   onSubmit,
+  readonly = false, // Default to false
 }) => {
   const isEditMode = !!member;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,7 +138,9 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? '編輯會員資料' : '新增會員'}</DialogTitle>
+          <DialogTitle>
+            {readonly ? '查看會員資料' : isEditMode ? '編輯會員資料' : '新增會員'}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -149,7 +153,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>會員編號</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,7 +167,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>姓名</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -177,7 +181,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>身分證號碼</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +198,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>縣市</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -208,7 +212,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>區域</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -222,7 +226,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>段</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -236,7 +240,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>小段</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -250,7 +254,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>地號</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -264,7 +268,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>土地持分</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -278,7 +282,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>土地面積(m²)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" />
+                          <Input {...field} type="number" step="0.01" readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -297,7 +301,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>建號</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -311,7 +315,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>建物持分</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -325,7 +329,7 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                       <FormItem>
                         <FormLabel>建物面積(m²)</FormLabel>
                         <FormControl>
-                          <Input {...field} type="number" step="0.01" />
+                          <Input {...field} type="number" step="0.01" readOnly={readonly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -337,11 +341,13 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                取消
+                {readonly ? '關閉' : '取消'}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? '處理中...' : isEditMode ? '更新' : '新增'}
-              </Button>
+              {!readonly && (
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? '處理中...' : isEditMode ? '更新' : '新增'}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </Form>
