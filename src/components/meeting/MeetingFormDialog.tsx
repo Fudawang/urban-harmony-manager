@@ -136,10 +136,17 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
   const handleSubmit = async (data: MeetingFormValues) => {
     try {
       setIsSubmitting(true);
-      // Format the date to string
-      const formattedData = {
-        ...data,
+      
+      // Ensure all required properties are included and properly typed
+      const formattedData: Omit<Meeting, 'id'> = {
+        title: data.title,
+        type: data.type,
+        term: data.term,
+        number: data.number,
         date: format(data.date, 'yyyy-MM-dd'),
+        location: data.location,
+        status: data.status,
+        totalMembers: data.totalMembers,
         attendees: data.attendees || 0,
         documents: data.documents || 0,
       };
