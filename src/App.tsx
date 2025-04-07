@@ -27,48 +27,46 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <AssociationProvider>
-                <SidebarProvider>
-                  <div className="min-h-screen bg-gray-50 flex flex-col">
-                    <Sidebar />
-                    <Toaster />
-                    <SonnerToaster position="top-right" />
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/public-info" element={<PublicInfo />} />
-                      
-                      {/* Protected routes */}
-                      <Route element={<AuthLayout />}>
-                        <Route path="/dashboard" element={<Dashboard />} />
-                      </Route>
-                      
-                      {/* Admin-only routes */}
-                      <Route element={<AuthLayout requireAdmin />}>
-                        <Route path="/members" element={<MemberManagement />} />
-                        <Route path="/meetings" element={<MeetingManagement />} />
-                        <Route path="/board" element={<BoardManagement />} />
-                        <Route path="/proposals" element={<ProposalManagement />} />
-                        <Route path="/reports" element={<Reports />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/database" element={<DatabaseManagement />} />
-                      </Route>
-                      
-                      {/* Catch-all route */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </div>
-                </SidebarProvider>
-              </AssociationProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <AssociationProvider>
+              <SidebarProvider>
+                <div className="min-h-screen bg-gray-50 flex flex-col">
+                  <Sidebar />
+                  <Toaster />
+                  <SonnerToaster position="top-right" />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/public-info" element={<PublicInfo />} />
+                    
+                    {/* Protected routes */}
+                    <Route element={<AuthLayout />}>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                    </Route>
+                    
+                    {/* Admin-only routes */}
+                    <Route element={<AuthLayout requireAdmin />}>
+                      <Route path="/members" element={<MemberManagement />} />
+                      <Route path="/meetings" element={<MeetingManagement />} />
+                      <Route path="/board" element={<BoardManagement />} />
+                      <Route path="/proposals" element={<ProposalManagement />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/database" element={<DatabaseManagement />} />
+                    </Route>
+                    
+                    {/* Catch-all route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
+              </SidebarProvider>
+            </AssociationProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
