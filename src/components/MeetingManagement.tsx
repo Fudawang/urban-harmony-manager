@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -34,119 +34,133 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-// Mock meeting data
-const mockMeetings = [
-  {
-    id: '1',
-    type: 'general',
-    term: 1,
-    number: 1,
-    title: '第一屆第一次會員大會',
-    date: '2022-05-15',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 87,
-    totalMembers: 126,
-    documents: 3,
-  },
-  {
-    id: '2',
-    type: 'board',
-    term: 1,
-    number: 1,
-    title: '第一屆第一次理監事會議',
-    date: '2022-06-10',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 15,
-    totalMembers: 15,
-    documents: 2,
-  },
-  {
-    id: '3',
-    type: 'general',
-    term: 1,
-    number: 2,
-    title: '第一屆第二次會員大會',
-    date: '2022-12-18',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 92,
-    totalMembers: 126,
-    documents: 4,
-  },
-  {
-    id: '4',
-    type: 'board',
-    term: 1,
-    number: 2,
-    title: '第一屆第二次理監事會議',
-    date: '2023-01-20',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 14,
-    totalMembers: 15,
-    documents: 3,
-  },
-  {
-    id: '5',
-    type: 'general',
-    term: 2,
-    number: 1,
-    title: '第二屆第一次會員大會',
-    date: '2023-06-20',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 95,
-    totalMembers: 126,
-    documents: 5,
-  },
-  {
-    id: '6',
-    type: 'board',
-    term: 2,
-    number: 1,
-    title: '第二屆第一次理監事會議',
-    date: '2023-07-15',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'completed',
-    attendees: 15,
-    totalMembers: 15,
-    documents: 2,
-  },
-  {
-    id: '7',
-    type: 'general',
-    term: 2,
-    number: 2,
-    title: '第二屆第二次會員大會',
-    date: '2024-03-25',
-    location: '台北市中山區中山北路二段100號5樓會議室',
-    status: 'upcoming',
-    attendees: 0,
-    totalMembers: 126,
-    documents: 1,
-  },
-];
+import MeetingFormDialog from './meeting/MeetingFormDialog';
+import DeleteMeetingDialog from './meeting/DeleteMeetingDialog';
+import { 
+  Meeting,
+  getAllMeetings, 
+  createMeeting, 
+  updateMeeting, 
+  deleteMeeting, 
+  searchMeetings 
+} from '@/services/meetingService';
 
 const MeetingManagement: React.FC = () => {
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Filter meetings based on search term and active tab
-  const filteredMeetings = mockMeetings.filter(meeting => {
-    const matchesSearch = 
-      meeting.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      meeting.date.includes(searchTerm) ||
-      meeting.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'general') return matchesSearch && meeting.type === 'general';
-    if (activeTab === 'board') return matchesSearch && meeting.type === 'board';
-    
-    return matchesSearch;
-  });
+  // Dialog state
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | undefined>(undefined);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  // Fetch meetings on component mount
+  useEffect(() => {
+    fetchMeetings();
+  }, []);
+
+  // Filter meetings when search term or active tab changes
+  useEffect(() => {
+    filterMeetings();
+  }, [searchTerm, activeTab, meetings]);
+
+  const fetchMeetings = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllMeetings();
+      setMeetings(data);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
+      toast.error('無法載入會議資料');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filterMeetings = async () => {
+    try {
+      if (searchTerm === '') {
+        // If no search term, filter only by tab
+        let results = meetings;
+        if (activeTab === 'general') {
+          results = meetings.filter(meeting => meeting.type === 'general');
+        } else if (activeTab === 'board') {
+          results = meetings.filter(meeting => meeting.type === 'board');
+        }
+        setFilteredMeetings(results);
+      } else {
+        // If search term exists, use search function
+        const results = await searchMeetings(searchTerm, activeTab);
+        setFilteredMeetings(results);
+      }
+    } catch (error) {
+      console.error('Error filtering meetings:', error);
+    }
+  };
+
+  const handleAddMeeting = async (data: Omit<Meeting, 'id'>) => {
+    try {
+      await createMeeting(data);
+      await fetchMeetings();
+      toast.success('會議已成功新增');
+    } catch (error) {
+      console.error('Error adding meeting:', error);
+      toast.error('新增會議失敗');
+      throw error;
+    }
+  };
+
+  const handleEditMeeting = async (data: Omit<Meeting, 'id'>) => {
+    if (!selectedMeeting) return;
+    try {
+      await updateMeeting(selectedMeeting.id, data);
+      await fetchMeetings();
+      toast.success('會議資料已更新');
+    } catch (error) {
+      console.error('Error updating meeting:', error);
+      toast.error('更新會議資料失敗');
+      throw error;
+    }
+  };
+
+  const handleDeleteMeeting = async () => {
+    if (!selectedMeeting) return;
+    try {
+      await deleteMeeting(selectedMeeting.id);
+      await fetchMeetings();
+      toast.success('會議已成功刪除');
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+      toast.error('刪除會議失敗');
+      throw error;
+    }
+  };
+
+  const openEditDialog = (meeting: Meeting) => {
+    setSelectedMeeting(meeting);
+    setIsEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (meeting: Meeting) => {
+    setSelectedMeeting(meeting);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const openViewDialog = (meeting: Meeting) => {
+    setSelectedMeeting(meeting);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleExport = () => {
+    toast.info('匯出功能開發中');
+  };
 
   return (
     <div className="space-y-6">
@@ -154,7 +168,7 @@ const MeetingManagement: React.FC = () => {
         <h1 className="text-3xl font-bold tracking-tight">會議管理</h1>
         
         <div className="flex flex-wrap gap-2">
-          <Button className="bg-urban-600 hover:bg-urban-700">
+          <Button className="bg-urban-600 hover:bg-urban-700" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             新增會議
           </Button>
@@ -167,11 +181,11 @@ const MeetingManagement: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
                 <FileText className="h-4 w-4 mr-2" />
                 匯出 PDF
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
                 <FileText className="h-4 w-4 mr-2" />
                 匯出 Excel
               </DropdownMenuItem>
@@ -224,7 +238,13 @@ const MeetingManagement: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMeetings.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24">
+                      正在載入會議資料...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredMeetings.length > 0 ? (
                   filteredMeetings.map((meeting) => (
                     <TableRow key={meeting.id}>
                       <TableCell className="font-medium">
@@ -283,13 +303,29 @@ const MeetingManagement: React.FC = () => {
                               <Vote className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" title="查看">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="查看"
+                            onClick={() => openViewDialog(meeting)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" title="編輯">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="編輯"
+                            onClick={() => openEditDialog(meeting)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" title="刪除" className="text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="刪除" 
+                            className="text-destructive"
+                            onClick={() => openDeleteDialog(meeting)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -308,6 +344,41 @@ const MeetingManagement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Add Meeting Dialog */}
+      <MeetingFormDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSubmit={handleAddMeeting}
+      />
+      
+      {/* Edit Meeting Dialog */}
+      <MeetingFormDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        meeting={selectedMeeting}
+        onSubmit={handleEditMeeting}
+      />
+      
+      {/* View Meeting Dialog is the same form but readonly */}
+      {selectedMeeting && (
+        <MeetingFormDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          meeting={selectedMeeting}
+          onSubmit={async () => {}}
+        />
+      )}
+      
+      {/* Delete Meeting Dialog */}
+      {selectedMeeting && (
+        <DeleteMeetingDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleDeleteMeeting}
+          meetingTitle={selectedMeeting.title}
+        />
+      )}
     </div>
   );
 };

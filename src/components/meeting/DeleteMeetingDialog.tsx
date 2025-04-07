@@ -11,18 +11,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteMemberDialogProps {
+interface DeleteMeetingDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  memberName: string;
+  meetingTitle: string;
 }
 
-const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({
+const DeleteMeetingDialog: React.FC<DeleteMeetingDialogProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  memberName,
+  meetingTitle,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -42,9 +42,9 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>確定要刪除會員資料？</AlertDialogTitle>
+          <AlertDialogTitle>確定要刪除會議資料？</AlertDialogTitle>
           <AlertDialogDescription>
-            您確定要刪除 {memberName} 的會員資料嗎？此操作無法復原。
+            您確定要刪除 {meetingTitle} 的會議資料嗎？此操作無法復原。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -62,4 +62,4 @@ const DeleteMemberDialog: React.FC<DeleteMemberDialogProps> = ({
   );
 };
 
-export default DeleteMemberDialog;
+export default DeleteMeetingDialog;
