@@ -11,10 +11,12 @@ import {
   Settings, 
   LogIn,
   ChevronLeft,
-  Newspaper
+  Newspaper,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { Separator } from '@/components/ui/separator';
 
 type SidebarContextType = {
   isOpen: boolean;
@@ -107,15 +109,24 @@ const Sidebar: React.FC = () => {
           </Button>
           
           <nav className="space-y-1">
-            {/* Public link - visible to everyone */}
-            <NavItem to="/public-info" icon={<Newspaper size={18} />} label="公開資訊" />
+            {/* Public section */}
+            <div className="mb-2">
+              <div className="px-3 py-2 text-xs font-semibold text-gray-500">公開資訊</div>
+              <NavItem to="/" icon={<Home size={18} />} label="首頁" />
+              <NavItem to="/public-info" icon={<Newspaper size={18} />} label="公開資訊頁面" />
+            </div>
             
             {isAuthenticated && (
-              <NavItem to="/dashboard" icon={<Home size={18} />} label="首頁" />
+              <>
+                <Separator className="my-2" />
+                <NavItem to="/dashboard" icon={<Shield size={18} />} label="管理系統儀表板" />
+              </>
             )}
             
             {isAdmin() && (
               <>
+                <Separator className="my-2" />
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500">管理功能</div>
                 <NavItem to="/members" icon={<Users size={18} />} label="會員管理" />
                 <NavItem to="/meetings" icon={<Calendar size={18} />} label="會議管理" />
                 <NavItem to="/board" icon={<Users size={18} />} label="理監事管理" />

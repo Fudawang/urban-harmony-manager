@@ -1,9 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, ClipboardList, User, FileText } from 'lucide-react';
+import { Users, Calendar, ClipboardList, User, FileText, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAssociation } from '@/contexts/AssociationContext';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const StatCard = ({ 
   icon, 
@@ -40,13 +43,19 @@ const recentActivity = [
 const Dashboard: React.FC = () => {
   const { isAdmin, user } = useAuth();
   const { associationInfo } = useAssociation();
+  const navigate = useNavigate();
+  
+  // Format the last login time if available
+  const lastLoginFormatted = user?.lastLogin 
+    ? format(new Date(user.lastLogin), 'yyyy-MM-dd HH:mm:ss')
+    : '從未登入';
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">系統儀表板</h1>
         <div className="text-sm text-muted-foreground">
-          上次登入時間: 2025-04-06 09:30:45
+          上次登入時間: {lastLoginFormatted}
         </div>
       </div>
 
@@ -148,6 +157,32 @@ const Dashboard: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-xl flex items-center">
+                <Globe className="h-5 w-5 mr-2" />
+                公開資訊管理
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/public-info')}
+              >
+                查看公開頁面
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                您可以在系統設定中管理公開資訊頁面所顯示的內容，包括基本資料和最新消息的發佈。
+              </p>
+              <div className="mt-4">
+                <Button onClick={() => navigate('/settings')} variant="outline" size="sm">
+                  前往管理公開資訊
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </>
       ) : (
         <div className="space-y-6">
@@ -166,6 +201,11 @@ const Dashboard: React.FC = () => {
               <p className="mt-4 text-sm text-muted-foreground">
                 如需查看更多資訊或執行管理功能，請聯繫管理員取得適當的權限。
               </p>
+              <div className="mt-6">
+                <Button onClick={() => navigate('/public-info')} className="w-full">
+                  前往公開資訊頁面
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

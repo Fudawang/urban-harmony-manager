@@ -3,7 +3,7 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Header from './Header';
-import Sidebar from './Sidebar';
+import { toast } from 'sonner';
 
 type AuthLayoutProps = {
   requireAdmin?: boolean;
@@ -14,11 +14,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ requireAdmin = false }) => {
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    toast.error('請先登入系統');
     return <Navigate to="/" replace />;
   }
 
   // Redirect to dashboard if user is not admin but admin is required
   if (requireAdmin && !isAdmin()) {
+    toast.error('您沒有權限存取此頁面');
     return <Navigate to="/dashboard" replace />;
   }
 

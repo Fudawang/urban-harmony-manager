@@ -7,6 +7,7 @@ type User = {
   id: string;
   username: string;
   role: 'admin' | 'visitor';
+  lastLogin?: string;
 };
 
 type AuthContextType = {
@@ -44,7 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check for stored user on initial load
     const storedUser = localStorage.getItem('urbanRenewalUser');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
       setIsAuthenticated(true);
     }
   }, []);
@@ -57,11 +59,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (foundUser) {
       const { password, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
+      const now = new Date().toISOString();
+      const userWithLastLogin = {
+        ...userWithoutPassword,
+        lastLogin: now
+      };
+      
+      setUser(userWithLastLogin);
       setIsAuthenticated(true);
-      localStorage.setItem('urbanRenewalUser', JSON.stringify(userWithoutPassword));
+      localStorage.setItem('urbanRenewalUser', JSON.stringify(userWithLastLogin));
       toast.success('登入成功');
-      navigate('/dashboard');
+      
+      // Navigate admin to dashboard and regular users to public info
+      if (foundUser.role === 'admin') {
+        navigate('/dashboard');
+      } else {
+        navigate('/public-info');
+      }
     } else {
       toast.error('帳號或密碼錯誤');
       throw new Error('帳號或密碼錯誤');

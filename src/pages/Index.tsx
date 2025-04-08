@@ -9,18 +9,23 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAssociation } from '@/contexts/AssociationContext';
 import NewsList from '@/components/news/NewsList';
+import Header from '@/components/Header';
 
 const Index: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { associationInfo, news } = useAssociation();
   
-  // If already authenticated, redirect to dashboard
+  // If already authenticated, redirect to the appropriate page
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      if (isAdmin()) {
+        navigate('/dashboard');
+      } else {
+        navigate('/public-info');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isAdmin, navigate]);
 
   // Get only the latest 3 public news items
   const latestPublicNews = news
@@ -30,6 +35,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-urban-50 to-white">
+      <Header />
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-12 items-start">
           <div className="order-2 md:order-1">
