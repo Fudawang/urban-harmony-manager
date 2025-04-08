@@ -31,7 +31,11 @@ export const getInstallationSteps = async (): Promise<InstallationStep[]> => {
     return [];
   }
   
-  return data;
+  // Type cast the status to ensure it matches the expected union type
+  return data.map(step => ({
+    ...step,
+    status: step.status as 'pending' | 'completed' | 'skipped'
+  }));
 };
 
 // Update installation step status
