@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAssociation } from '@/contexts/AssociationContext';
-import { Building2, MapPin, Phone, Mail, ExternalLink, Globe } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, ExternalLink, Globe, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
