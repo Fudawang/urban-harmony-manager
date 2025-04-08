@@ -35,10 +35,11 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-urban-50 to-white flex flex-col">
+      {/* Header is now outside the main content flow */}
       <Header />
       
-      {/* Main content - with proper padding for sidebar */}
-      <div className="flex-1 md:pl-64">
+      {/* Main content area with correct padding */}
+      <div className="flex-1 md:pl-64 pt-2">
         {/* 上方主要標題與介紹區塊 */}
         <div className="bg-gradient-to-r from-urban-700 to-urban-800 text-white py-12">
           <div className="container mx-auto px-4">

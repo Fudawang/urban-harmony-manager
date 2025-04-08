@@ -17,7 +17,7 @@ const PublicInfo: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <div className="container mx-auto py-8 px-4 md:pl-64">
+      <div className="container mx-auto py-8 px-4 md:pl-64 pt-2">
         <h1 className="text-3xl font-bold mb-2 text-urban-800">公開資訊</h1>
         <p className="text-muted-foreground mb-8">
           {associationInfo.name}的公開資訊，包含基本資料與最新公告。
