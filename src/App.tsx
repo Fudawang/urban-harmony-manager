@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SidebarProvider } from "@/components/Sidebar";
 import { AssociationProvider } from "@/contexts/AssociationContext";
+import { InstallationProvider } from "@/contexts/InstallationContext";
 import Sidebar from "@/components/Sidebar";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -21,6 +22,7 @@ import Settings from "./components/Settings";
 import DatabaseManagement from "./components/DatabaseManagement";
 import AuthLayout from "./components/AuthLayout";
 import PublicInfo from "./pages/PublicInfo";
+import Installation from "./pages/Installation";
 
 function App() {
   // Create a new QueryClient instance inside the component
@@ -31,39 +33,42 @@ function App() {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <AssociationProvider>
-              <SidebarProvider>
-                <div className="min-h-screen bg-gray-50 flex flex-col">
-                  <Sidebar />
-                  <Toaster />
-                  <SonnerToaster position="top-right" />
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/public-info" element={<PublicInfo />} />
-                    
-                    {/* Protected routes */}
-                    <Route element={<AuthLayout />}>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                    </Route>
-                    
-                    {/* Admin-only routes */}
-                    <Route element={<AuthLayout requireAdmin />}>
-                      <Route path="/members" element={<MemberManagement />} />
-                      <Route path="/meetings" element={<MeetingManagement />} />
-                      <Route path="/board" element={<BoardManagement />} />
-                      <Route path="/proposals" element={<ProposalManagement />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/database" element={<DatabaseManagement />} />
-                    </Route>
-                    
-                    {/* Catch-all route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-              </SidebarProvider>
-            </AssociationProvider>
+            <InstallationProvider>
+              <AssociationProvider>
+                <SidebarProvider>
+                  <div className="min-h-screen bg-gray-50 flex flex-col">
+                    <Sidebar />
+                    <Toaster />
+                    <SonnerToaster position="top-right" />
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/public-info" element={<PublicInfo />} />
+                      <Route path="/installation" element={<Installation />} />
+                      
+                      {/* Protected routes */}
+                      <Route element={<AuthLayout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                      </Route>
+                      
+                      {/* Admin-only routes */}
+                      <Route element={<AuthLayout requireAdmin />}>
+                        <Route path="/members" element={<MemberManagement />} />
+                        <Route path="/meetings" element={<MeetingManagement />} />
+                        <Route path="/board" element={<BoardManagement />} />
+                        <Route path="/proposals" element={<ProposalManagement />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/database" element={<DatabaseManagement />} />
+                      </Route>
+                      
+                      {/* Catch-all route */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </div>
+                </SidebarProvider>
+              </AssociationProvider>
+            </InstallationProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
