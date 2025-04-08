@@ -23,7 +23,9 @@ const Installation = () => {
   }, [isLoading, isAuthenticated, isCompleted, navigate]);
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">
+      <div className="loading text-xl">載入中...</div>
+    </div>;
   }
 
   if (!isAuthenticated) {
