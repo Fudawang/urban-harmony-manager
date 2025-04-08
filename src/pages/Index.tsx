@@ -37,7 +37,8 @@ const Index: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-urban-50 to-white flex flex-col">
       <Header />
       
-      <div className="flex-1">
+      {/* Main content - with proper padding for sidebar */}
+      <div className="flex-1 md:pl-64">
         {/* 上方主要標題與介紹區塊 */}
         <div className="bg-gradient-to-r from-urban-700 to-urban-800 text-white py-12">
           <div className="container mx-auto px-4">
@@ -155,7 +156,7 @@ const Index: React.FC = () => {
       </div>
       
       {/* 頁尾 */}
-      <footer className="bg-urban-800 text-white/80 py-6 mt-auto">
+      <footer className="bg-urban-800 text-white/80 py-6 mt-auto md:pl-64">
         <div className="container mx-auto px-4 text-center text-sm">
           <p>© {new Date().getFullYear()} 都市更新會管理系統 - 提供完整的都市更新會運作管理解決方案</p>
         </div>
