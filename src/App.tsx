@@ -22,10 +22,10 @@ import DatabaseManagement from "./components/DatabaseManagement";
 import AuthLayout from "./components/AuthLayout";
 import PublicInfo from "./pages/PublicInfo";
 
-// Create the queryClient outside of the component
-const queryClient = new QueryClient();
-
 function App() {
+  // Create a new QueryClient instance inside the component
+  const queryClient = new QueryClient();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
