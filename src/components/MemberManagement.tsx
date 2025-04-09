@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import {
   Trash2, 
   Eye, 
   FileText,
-  Filter,
   SlidersHorizontal
 } from 'lucide-react';
 import {
@@ -63,6 +61,13 @@ const formatName = (name: string) => {
   return `${name.charAt(0)}**`;
 };
 
+// Interface for filter options
+interface FilterOptions {
+  city?: string;
+  district?: string;
+  section?: string;
+}
+
 const MemberManagement: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,6 +79,7 @@ const MemberManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
   // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -81,7 +87,6 @@ const MemberManagement: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | undefined>(undefined);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   // Fetch members on component mount and when pagination, search, or tab changes
   useEffect(() => {
@@ -96,7 +101,15 @@ const MemberManagement: React.FC = () => {
       if (searchTerm === '' && activeTab === 'all') {
         response = await getAllMembers(currentPage, pageSize);
       } else {
-        response = await searchMembers(searchTerm, activeTab, currentPage, pageSize);
+        // Convert activeTab to proper filter object
+        const filter: FilterOptions = { ...filterOptions };
+        if (activeTab === 'section1') {
+          filter.section = '一小段';
+        } else if (activeTab === 'section2') {
+          filter.section = '二小段';
+        }
+        
+        response = await searchMembers(searchTerm, filter, currentPage, pageSize);
       }
       
       setMembers(response.data);

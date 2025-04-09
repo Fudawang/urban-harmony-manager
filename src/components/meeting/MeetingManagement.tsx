@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import {
   FileText,
   CheckCircle2,
   Users,
-  Vote
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,13 +31,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
 import MeetingFormDialog from './MeetingFormDialog';
 import DeleteMeetingDialog from './DeleteMeetingDialog';
 import MeetingCheckIn from './MeetingCheckIn';
 import { 
-  Meeting,
+  Meeting as MeetingType,
   getAllMeetings, 
   createMeeting, 
   updateMeeting, 
@@ -47,8 +44,10 @@ import {
   searchMeetings 
 } from '@/services/meetingService';
 
+// Define a local Meeting type to fix the type error
+type Meeting = MeetingType;
+
 const MeetingManagement: React.FC = () => {
-  const navigate = useNavigate();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

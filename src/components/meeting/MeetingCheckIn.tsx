@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Check, UserCheck, PercentSquare, Building, LandPlot } from 'lucide-react';
+import { Check, UserCheck, Building, LandPlot, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   Meeting, 
@@ -14,7 +14,7 @@ import {
   getMeetingAttendance, 
   completeMeeting 
 } from '@/services/meetingService';
-import { getMemberById } from '@/services/memberService';
+import { getMemberById, getAllMembers, Member } from '@/services/memberService';
 
 interface MeetingCheckInProps {
   meeting: Meeting;
@@ -26,12 +26,16 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
   const [isProcessing, setIsProcessing] = useState(false);
   const [attendanceList, setAttendanceList] = useState<MeetingAttendance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [memberList, setMemberList] = useState<Member[]>([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [showMemberList, setShowMemberList] = useState(false);
 
   // Load attendance on component mount and when meeting changes
   useEffect(() => {
     if (meeting.status === 'in-progress' || meeting.status === 'completed') {
       loadAttendance();
     }
+    loadMembers();
   }, [meeting]);
 
   const loadAttendance = async () => {
@@ -44,6 +48,16 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
       toast.error('無法載入出席紀錄');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMembers = async () => {
+    try {
+      const response = await getAllMembers(1, 100);
+      setMemberList(response.data);
+    } catch (error) {
+      console.error('Error loading members:', error);
+      toast.error('無法載入會員名單');
     }
   };
 
@@ -89,10 +103,19 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
 
     setIsProcessing(true);
     try {
-      // Get member details
-      const member = await getMemberById(memberId.replace(/^M/, ''));
+      // Get member details - strip 'M' if present to match the ID format in the service
+      const cleanMemberId = memberId.replace(/^M/i, '');
+      const member = await getMemberById(cleanMemberId);
+      
       if (!member) {
         toast.error('找不到此會員編號');
+        return;
+      }
+
+      // Check if member is already checked in
+      const alreadyCheckedIn = attendanceList.some(a => a.memberId === member.id);
+      if (alreadyCheckedIn) {
+        toast.error(`${member.name} 已經報到過了`);
         return;
       }
 
@@ -104,13 +127,14 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
       });
 
       // Update attendance list and meeting stats
+      await loadAttendance();
       const updatedMeeting = { ...meeting };
       updatedMeeting.attendees += 1;
       onUpdate(updatedMeeting);
       
       toast.success(`${member.name} 報到成功`);
-      await loadAttendance();
       setMemberId('');
+      setShowMemberList(false);
     } catch (error: any) {
       console.error('Error checking in member:', error);
       toast.error(error.message || '報到失敗，請稍後再試');
@@ -118,6 +142,17 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
       setIsProcessing(false);
     }
   };
+  
+  const handleSelectMember = (member: Member) => {
+    setMemberId(member.memberId);
+    setShowMemberList(false);
+  };
+
+  // Filter member list based on search
+  const filteredMembers = memberList.filter(member => 
+    member.memberId.toLowerCase().includes(memberSearch.toLowerCase()) || 
+    member.name.toLowerCase().includes(memberSearch.toLowerCase())
+  );
 
   // Calculate attendance percentage
   const attendancePercent = meeting.totalMembers > 0 
@@ -174,27 +209,58 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
             </CardHeader>
             <CardContent>
               {meeting.checkInEnabled && (
-                <div className="flex space-x-2 mb-6">
-                  <Input
-                    placeholder="輸入會員編號"
-                    value={memberId}
-                    onChange={(e) => setMemberId(e.target.value)}
-                    disabled={isProcessing || meeting.status === 'completed'}
-                    className="max-w-xs"
-                  />
-                  <Button 
-                    onClick={handleCheckIn} 
-                    disabled={isProcessing || meeting.status === 'completed'}
-                  >
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    報到
-                  </Button>
+                <div className="space-y-4 mb-6">
+                  <div className="flex space-x-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="輸入會員編號或搜尋會員姓名"
+                        value={memberId}
+                        onChange={(e) => {
+                          setMemberId(e.target.value);
+                          setMemberSearch(e.target.value);
+                          setShowMemberList(e.target.value.length > 0);
+                        }}
+                        onClick={() => setShowMemberList(true)}
+                        disabled={isProcessing || meeting.status === 'completed'}
+                        className="pl-8"
+                      />
+                      
+                      {showMemberList && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                          {filteredMembers.length > 0 ? (
+                            filteredMembers.map((member) => (
+                              <div 
+                                key={member.id}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between"
+                                onClick={() => handleSelectMember(member)}
+                              >
+                                <span>{member.name}</span>
+                                <span className="text-muted-foreground">{member.memberId}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-2 text-muted-foreground">
+                              找不到符合的會員
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={handleCheckIn} 
+                      disabled={isProcessing || meeting.status === 'completed'}
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      報到
+                    </Button>
+                  </div>
                 </div>
               )}
               
               <div className="border rounded-md">
                 <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                  <h3 className="font-medium">最近報到會員</h3>
+                  <h3 className="font-medium">報到會員名單</h3>
                   <span className="text-sm text-muted-foreground">
                     共 {attendanceList.length} 人
                   </span>
@@ -212,6 +278,7 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
                           <th className="text-left p-3 font-medium text-sm">會員編號</th>
                           <th className="text-left p-3 font-medium text-sm">姓名</th>
                           <th className="text-left p-3 font-medium text-sm">報到時間</th>
+                          <th className="text-left p-3 font-medium text-sm">持分</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -227,6 +294,12 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
+                            </td>
+                            <td className="p-3 text-sm">
+                              <div className="flex flex-col">
+                                <span>土地: {record.landShare}</span>
+                                <span>建物: {record.buildingShare}</span>
+                              </div>
                             </td>
                           </tr>
                         ))}
