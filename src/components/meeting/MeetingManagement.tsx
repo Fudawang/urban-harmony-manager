@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +55,7 @@ const MeetingManagement: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | undefined>(undefined);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCheckInMode, setIsCheckInMode] = useState(false);
 
@@ -376,12 +377,15 @@ const MeetingManagement: React.FC = () => {
             />
           )}
           
-          <DeleteMeetingDialog
-            isOpen={isDeleteDialogOpen}
-            onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleDeleteMeeting}
-            meetingTitle={selectedMeeting.title}
-          />
+          {/* Only render DeleteMeetingDialog if selectedMeeting exists */}
+          {selectedMeeting && (
+            <DeleteMeetingDialog
+              isOpen={isDeleteDialogOpen}
+              onClose={() => setIsDeleteDialogOpen(false)}
+              onConfirm={handleDeleteMeeting}
+              meetingTitle={selectedMeeting.title}
+            />
+          )}
         </>
       ) : (
         <>
