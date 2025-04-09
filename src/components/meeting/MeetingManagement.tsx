@@ -36,16 +36,13 @@ import MeetingFormDialog from './MeetingFormDialog';
 import DeleteMeetingDialog from './DeleteMeetingDialog';
 import MeetingCheckIn from './MeetingCheckIn';
 import { 
-  Meeting as MeetingType,
+  Meeting,
   getAllMeetings, 
   createMeeting, 
   updateMeeting, 
   deleteMeeting, 
   searchMeetings 
 } from '@/services/meetingService';
-
-// Define a local Meeting type to fix the type error
-type Meeting = MeetingType;
 
 const MeetingManagement: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -54,7 +51,6 @@ const MeetingManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -62,12 +58,10 @@ const MeetingManagement: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCheckInMode, setIsCheckInMode] = useState(false);
 
-  // Fetch meetings on component mount
   useEffect(() => {
     fetchMeetings();
   }, []);
 
-  // Filter meetings when search term or active tab changes
   useEffect(() => {
     filterMeetings();
   }, [searchTerm, activeTab, meetings]);
@@ -88,7 +82,6 @@ const MeetingManagement: React.FC = () => {
   const filterMeetings = async () => {
     try {
       if (searchTerm === '') {
-        // If no search term, filter only by tab
         let results = meetings;
         if (activeTab === 'general') {
           results = meetings.filter(meeting => meeting.type === 'general');
@@ -97,7 +90,6 @@ const MeetingManagement: React.FC = () => {
         }
         setFilteredMeetings(results);
       } else {
-        // If search term exists, use search function
         const results = await searchMeetings(searchTerm, activeTab);
         setFilteredMeetings(results);
       }
@@ -361,14 +353,12 @@ const MeetingManagement: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Add Meeting Dialog */}
           <MeetingFormDialog
             isOpen={isAddDialogOpen}
             onClose={() => setIsAddDialogOpen(false)}
             onSubmit={handleAddMeeting}
           />
           
-          {/* Edit Meeting Dialog */}
           <MeetingFormDialog
             isOpen={isEditDialogOpen}
             onClose={() => setIsEditDialogOpen(false)}
@@ -376,7 +366,6 @@ const MeetingManagement: React.FC = () => {
             onSubmit={handleEditMeeting}
           />
           
-          {/* View Meeting Dialog is the same form but readonly */}
           {selectedMeeting && (
             <MeetingFormDialog
               isOpen={isViewDialogOpen}
@@ -387,18 +376,14 @@ const MeetingManagement: React.FC = () => {
             />
           )}
           
-          {/* Delete Meeting Dialog */}
-          {selectedMeeting && (
-            <DeleteMeetingDialog
-              isOpen={isDeleteDialogOpen}
-              onClose={() => setIsDeleteDialogOpen(false)}
-              onConfirm={handleDeleteMeeting}
-              meetingTitle={selectedMeeting.title}
-            />
-          )}
+          <DeleteMeetingDialog
+            isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            onConfirm={handleDeleteMeeting}
+            meetingTitle={selectedMeeting.title}
+          />
         </>
       ) : (
-        /* Meeting Check-In Interface */
         <>
           <Button 
             variant="outline" 
