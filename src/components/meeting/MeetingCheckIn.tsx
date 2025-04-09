@@ -14,7 +14,7 @@ import {
   getMeetingAttendance, 
   completeMeeting 
 } from '@/services/meetingService';
-import { getMemberById, getAllMembers, Member } from '@/services/memberService';
+import { searchMembers, Member } from '@/services/memberService';
 
 interface MeetingCheckInProps {
   meeting: Meeting;
@@ -29,6 +29,7 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
   const [memberList, setMemberList] = useState<Member[]>([]);
   const [memberSearch, setMemberSearch] = useState('');
   const [showMemberList, setShowMemberList] = useState(false);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
 
   // Load attendance on component mount and when meeting changes
   useEffect(() => {
@@ -37,6 +38,19 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
     }
     loadMembers();
   }, [meeting]);
+
+  // Filter members when search term changes
+  useEffect(() => {
+    if (memberSearch) {
+      const filtered = memberList.filter(member => 
+        member.memberId.toLowerCase().includes(memberSearch.toLowerCase()) || 
+        member.name.toLowerCase().includes(memberSearch.toLowerCase())
+      );
+      setFilteredMembers(filtered);
+    } else {
+      setFilteredMembers([]);
+    }
+  }, [memberSearch, memberList]);
 
   const loadAttendance = async () => {
     setIsLoading(true);
@@ -53,7 +67,7 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
 
   const loadMembers = async () => {
     try {
-      const response = await getAllMembers(1, 100);
+      const response = await searchMembers('', {}, 1, 100);
       setMemberList(response.data);
     } catch (error) {
       console.error('Error loading members:', error);
@@ -103,27 +117,29 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
 
     setIsProcessing(true);
     try {
-      // Get member details - strip 'M' if present to match the ID format in the service
-      const cleanMemberId = memberId.replace(/^M/i, '');
-      const member = await getMemberById(cleanMemberId);
+      // Find the member in our local list first
+      const selectedMember = memberList.find(member => 
+        member.memberId.toLowerCase() === memberId.toLowerCase().trim() ||
+        member.memberId.toLowerCase() === memberId.toLowerCase().replace(/^m/i, '')
+      );
       
-      if (!member) {
+      if (!selectedMember) {
         toast.error('找不到此會員編號');
         return;
       }
 
       // Check if member is already checked in
-      const alreadyCheckedIn = attendanceList.some(a => a.memberId === member.id);
+      const alreadyCheckedIn = attendanceList.some(a => a.memberId === selectedMember.id);
       if (alreadyCheckedIn) {
-        toast.error(`${member.name} 已經報到過了`);
+        toast.error(`${selectedMember.name} 已經報到過了`);
         return;
       }
 
       // Check in the member
-      await checkInMember(meeting.id, member.id, {
-        memberName: member.name,
-        landShare: member.landShare,
-        buildingShare: member.buildingShare
+      await checkInMember(meeting.id, selectedMember.id, {
+        memberName: selectedMember.name,
+        landShare: selectedMember.landShare,
+        buildingShare: selectedMember.buildingShare
       });
 
       // Update attendance list and meeting stats
@@ -132,8 +148,9 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
       updatedMeeting.attendees += 1;
       onUpdate(updatedMeeting);
       
-      toast.success(`${member.name} 報到成功`);
+      toast.success(`${selectedMember.name} 報到成功`);
       setMemberId('');
+      setMemberSearch('');
       setShowMemberList(false);
     } catch (error: any) {
       console.error('Error checking in member:', error);
@@ -145,14 +162,9 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
   
   const handleSelectMember = (member: Member) => {
     setMemberId(member.memberId);
+    setMemberSearch(member.memberId);
     setShowMemberList(false);
   };
-
-  // Filter member list based on search
-  const filteredMembers = memberList.filter(member => 
-    member.memberId.toLowerCase().includes(memberSearch.toLowerCase()) || 
-    member.name.toLowerCase().includes(memberSearch.toLowerCase())
-  );
 
   // Calculate attendance percentage
   const attendancePercent = meeting.totalMembers > 0 
@@ -215,18 +227,18 @@ const MeetingCheckIn: React.FC<MeetingCheckInProps> = ({ meeting, onUpdate }) =>
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="輸入會員編號或搜尋會員姓名"
-                        value={memberId}
+                        value={memberSearch}
                         onChange={(e) => {
-                          setMemberId(e.target.value);
                           setMemberSearch(e.target.value);
+                          setMemberId(e.target.value);
                           setShowMemberList(e.target.value.length > 0);
                         }}
-                        onClick={() => setShowMemberList(true)}
+                        onClick={() => setShowMemberList(memberSearch.length > 0)}
                         disabled={isProcessing || meeting.status === 'completed'}
                         className="pl-8"
                       />
                       
-                      {showMemberList && (
+                      {showMemberList && memberSearch.length > 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
                           {filteredMembers.length > 0 ? (
                             filteredMembers.map((member) => (
