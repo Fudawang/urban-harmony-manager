@@ -341,7 +341,7 @@ export const toggleCheckInMode = async (meetingId: string, enabled: boolean): Pr
   const updatedMeeting = {
     ...mockMeetings[meetingIndex],
     checkInEnabled: enabled,
-    status: enabled ? 'in-progress' : mockMeetings[meetingIndex].status,
+    status: enabled ? 'in-progress' as const : mockMeetings[meetingIndex].status,
   };
   
   mockMeetings[meetingIndex] = updatedMeeting;
@@ -426,7 +426,7 @@ export const completeMeeting = async (meetingId: string): Promise<Meeting> => {
   
   const updatedMeeting = {
     ...mockMeetings[meetingIndex],
-    status: 'completed',
+    status: 'completed' as const,
     checkInEnabled: false,
   };
   
