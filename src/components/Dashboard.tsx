@@ -1,7 +1,6 @@
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import VersionInfo from "@/components/system/VersionInfo";
 import { useInstallation } from "@/contexts/InstallationContext";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,9 @@ const Dashboard = () => {
   const { isCompleted, isLoading } = useInstallation();
   
   useEffect(() => {
-    // If the system installation is not completed, redirect to installation wizard
+    // If the system installation is not completed, redirect to settings with system tab
     if (!isLoading && !isCompleted) {
-      navigate("/installation");
+      navigate("/settings?tab=system");
     }
   }, [isLoading, isCompleted, navigate]);
 
@@ -144,9 +143,6 @@ const Dashboard = () => {
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>近期活動</CardTitle>
-            <CardDescription>
-              系統最近的活動記錄
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -198,9 +194,6 @@ const Dashboard = () => {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>系統資訊</CardTitle>
-            <CardDescription>
-              系統狀態與版本資訊
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <VersionInfo />

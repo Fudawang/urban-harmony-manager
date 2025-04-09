@@ -12,8 +12,10 @@ import { useAssociation } from '@/contexts/AssociationContext';
 import { useToast } from '@/hooks/use-toast';
 import NewsManagement from './news/NewsManagement';
 import PublicInfoManagement from './PublicInfoManagement';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, Newspaper, Globe } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Settings as SettingsIcon, Newspaper, Globe, Database } from 'lucide-react';
+import SystemStatusCheck from './system/SystemStatusCheck';
+import VersionInfo from './system/VersionInfo';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -41,7 +43,6 @@ const Settings = () => {
   const { associationInfo, updateAssociationInfo } = useAssociation();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   
   // Get tab from URL or default to "basic"
   const tab = searchParams.get('tab') || 'basic';
@@ -90,10 +91,14 @@ const Settings = () => {
       <h1 className="text-3xl font-bold mb-8 text-urban-800">系統設定</h1>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="max-w-4xl mx-auto">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic" className="flex items-center gap-1">
             <SettingsIcon className="h-4 w-4" />
             基本設定
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-1">
+            <Database className="h-4 w-4" />
+            系統狀態
           </TabsTrigger>
           <TabsTrigger value="news" className="flex items-center gap-1">
             <Newspaper className="h-4 w-4" />
@@ -216,6 +221,13 @@ const Settings = () => {
               </Form>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="system" className="pt-4">
+          <div className="grid gap-6">
+            <SystemStatusCheck />
+            <VersionInfo />
+          </div>
         </TabsContent>
         
         <TabsContent value="news" className="pt-4">

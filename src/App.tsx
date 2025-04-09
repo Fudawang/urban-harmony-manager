@@ -22,7 +22,6 @@ import Settings from "./components/Settings";
 import DatabaseManagement from "./components/DatabaseManagement";
 import AuthLayout from "./components/AuthLayout";
 import PublicInfo from "./pages/PublicInfo";
-import Installation from "./pages/Installation";
 
 function App() {
   // Create a new QueryClient instance inside the component
@@ -44,7 +43,7 @@ function App() {
                       {/* Public routes */}
                       <Route path="/" element={<Index />} />
                       <Route path="/public-info" element={<PublicInfo />} />
-                      <Route path="/installation" element={<Installation />} />
+                      <Route path="/installation" element={<Navigate to="/settings?tab=system" replace />} />
                       
                       {/* Protected routes */}
                       <Route element={<AuthLayout />}>
