@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,6 @@ import {
   Trash2, 
   Eye, 
   Vote,
-  ChevronDown,
   CheckCircle2,
   XCircle,
   AlertCircle
@@ -33,124 +33,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
-// Mock proposal data
-const mockProposals = [
-  {
-    id: '1',
-    meetingId: '5',
-    meetingTitle: '第二屆第一次會員大會',
-    number: 'P001',
-    title: '審議通過本會章程修正案',
-    type: 'important',
-    description: '因應法規變更，修正本會章程第5條、第8條及第12條條文',
-    status: 'approved',
-    votes: {
-      total: 126,
-      attended: 95,
-      approved: 86,
-      rejected: 5,
-      abstained: 4,
-      landShareApproved: 67,
-      buildingShareApproved: 72,
-    },
-  },
-  {
-    id: '2',
-    meetingId: '5',
-    meetingTitle: '第二屆第一次會員大會',
-    number: 'P002',
-    title: '審議107年度財務報表',
-    type: 'normal',
-    description: '審議及核可本會107年度財務收支決算報表',
-    status: 'approved',
-    votes: {
-      total: 126,
-      attended: 95,
-      approved: 90,
-      rejected: 2,
-      abstained: 3,
-      landShareApproved: 0,
-      buildingShareApproved: 0,
-    },
-  },
-  {
-    id: '3',
-    meetingId: '5',
-    meetingTitle: '第二屆第一次會員大會',
-    number: 'P003',
-    title: '審議108年度工作計畫',
-    type: 'normal',
-    description: '審議及核可本會108年度工作計畫及預算',
-    status: 'approved',
-    votes: {
-      total: 126,
-      attended: 95,
-      approved: 88,
-      rejected: 4,
-      abstained: 3,
-      landShareApproved: 0,
-      buildingShareApproved: 0,
-    },
-  },
-  {
-    id: '4',
-    meetingId: '3',
-    meetingTitle: '第一屆第二次會員大會',
-    number: 'P004',
-    title: '審議本更新重建計畫細部設計',
-    type: 'important',
-    description: '審議通過本更新重建計畫建築設計及細部規劃方案',
-    status: 'rejected',
-    votes: {
-      total: 126,
-      attended: 92,
-      approved: 48,
-      rejected: 40,
-      abstained: 4,
-      landShareApproved: 42,
-      buildingShareApproved: 45,
-    },
-  },
-  {
-    id: '5',
-    meetingId: '7',
-    meetingTitle: '第二屆第二次會員大會',
-    number: 'P005',
-    title: '審議都市更新事業計畫修正案',
-    type: 'important',
-    description: '依市府審查意見修正都市更新事業計畫',
-    status: 'pending',
-    votes: {
-      total: 126,
-      attended: 0,
-      approved: 0,
-      rejected: 0,
-      abstained: 0,
-      landShareApproved: 0,
-      buildingShareApproved: 0,
-    },
-  },
-  {
-    id: '6',
-    meetingId: '7',
-    meetingTitle: '第二屆第二次會員大會',
-    number: 'P006',
-    title: '審議109年度財務報表',
-    type: 'normal',
-    description: '審議及核可本會109年度財務收支決算報表',
-    status: 'pending',
-    votes: {
-      total: 126,
-      attended: 0,
-      approved: 0,
-      rejected: 0,
-      abstained: 0,
-      landShareApproved: 0,
-      buildingShareApproved: 0,
-    },
-  },
-];
+import { 
+  Proposal, 
+  getAllProposals, 
+  getProposalById,
+  searchProposals
+} from '@/services/proposalService';
+import ProposalVoting from './proposal/ProposalVoting';
 
 // Format proposal status badge
 const getStatusBadge = (status: string) => {
@@ -169,9 +60,16 @@ const getStatusBadge = (status: string) => {
           未通過
         </Badge>
       );
-    case 'pending':
+    case 'voting':
       return (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Vote className="h-3 w-3 mr-1" />
+          投票中
+        </Badge>
+      );
+    case 'pending':
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
           <AlertCircle className="h-3 w-3 mr-1" />
           待表決
         </Badge>
@@ -186,199 +84,286 @@ const getStatusBadge = (status: string) => {
 };
 
 const ProposalManagement: React.FC = () => {
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [filteredProposals, setFilteredProposals] = useState<Proposal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Filter proposals based on search term and active tab
-  const filteredProposals = mockProposals.filter(proposal => {
-    const matchesSearch = 
-      proposal.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'important') return matchesSearch && proposal.type === 'important';
-    if (activeTab === 'normal') return matchesSearch && proposal.type === 'normal';
-    if (activeTab === 'approved') return matchesSearch && proposal.status === 'approved';
-    if (activeTab === 'rejected') return matchesSearch && proposal.status === 'rejected';
-    if (activeTab === 'pending') return matchesSearch && proposal.status === 'pending';
-    
-    return matchesSearch;
-  });
+  // Selected proposal for voting
+  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [isVotingMode, setIsVotingMode] = useState(false);
+  
+  // Load proposals on component mount
+  useEffect(() => {
+    fetchProposals();
+  }, []);
+  
+  // Filter proposals when search term or active tab changes
+  useEffect(() => {
+    filterProposals();
+  }, [searchTerm, activeTab, proposals]);
+  
+  const fetchProposals = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllProposals();
+      setProposals(data);
+    } catch (error) {
+      console.error('Error fetching proposals:', error);
+      toast.error('無法載入議案資料');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const filterProposals = async () => {
+    try {
+      let filter: { type?: string, status?: string } = {};
+      
+      if (activeTab === 'important') filter.type = 'important';
+      if (activeTab === 'normal') filter.type = 'normal';
+      if (activeTab === 'approved') filter.status = 'approved';
+      if (activeTab === 'rejected') filter.status = 'rejected';
+      if (activeTab === 'pending') filter.status = 'pending';
+      if (activeTab === 'voting') filter.status = 'voting';
+      
+      const results = await searchProposals(searchTerm, filter);
+      setFilteredProposals(results);
+    } catch (error) {
+      console.error('Error filtering proposals:', error);
+    }
+  };
+  
+  const handleUpdateProposal = (updatedProposal: Proposal) => {
+    setProposals(proposals.map(p => p.id === updatedProposal.id ? updatedProposal : p));
+    setSelectedProposal(updatedProposal);
+  };
+  
+  const handleOpenVoting = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setIsVotingMode(true);
+  };
+  
+  const handleExport = () => {
+    toast.info('匯出功能開發中');
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">議案管理</h1>
-        
-        <div className="flex flex-wrap gap-2">
-          <Button className="bg-urban-600 hover:bg-urban-700">
-            <Plus className="h-4 w-4 mr-2" />
-            新增議案
+      {!isVotingMode ? (
+        <>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h1 className="text-3xl font-bold tracking-tight">議案管理</h1>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button className="bg-urban-600 hover:bg-urban-700">
+                <Plus className="h-4 w-4 mr-2" />
+                新增議案
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Download className="h-4 w-4 mr-2" />
+                    匯出
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExport}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    匯出 PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExport}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    匯出 Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>議案資料</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
+                <div className="relative w-full sm:w-96">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="搜尋議案編號、標題、說明..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                
+                <div className="text-sm text-muted-foreground">
+                  總計 {filteredProposals.length} 筆資料
+                </div>
+              </div>
+              
+              <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
+                <TabsList>
+                  <TabsTrigger value="all">全部議案</TabsTrigger>
+                  <TabsTrigger value="important">重要議案</TabsTrigger>
+                  <TabsTrigger value="normal">一般議案</TabsTrigger>
+                  <TabsTrigger value="approved">已通過</TabsTrigger>
+                  <TabsTrigger value="rejected">未通過</TabsTrigger>
+                  <TabsTrigger value="pending">待表決</TabsTrigger>
+                  <TabsTrigger value="voting">投票中</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">議案編號</TableHead>
+                      <TableHead>議案名稱</TableHead>
+                      <TableHead>議案類型</TableHead>
+                      <TableHead>所屬會議</TableHead>
+                      <TableHead>表決結果</TableHead>
+                      <TableHead>表決狀況</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center h-24">
+                          正在載入議案資料...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredProposals.length > 0 ? (
+                      filteredProposals.map((proposal) => (
+                        <TableRow key={proposal.id}>
+                          <TableCell className="font-medium">{proposal.number}</TableCell>
+                          <TableCell>
+                            <div>{proposal.title}</div>
+                            <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                              {proposal.description}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {proposal.type === 'important' ? (
+                              <Badge variant="default" className="bg-amber-500">重要議案</Badge>
+                            ) : (
+                              <Badge variant="outline">一般議案</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{proposal.meetingTitle}</TableCell>
+                          <TableCell>{getStatusBadge(proposal.status)}</TableCell>
+                          <TableCell>
+                            {proposal.status !== 'pending' ? (
+                              <div className="space-y-2 max-w-[180px]">
+                                <div className="flex justify-between text-xs">
+                                  <span>同意票</span>
+                                  <span className="font-medium">
+                                    {proposal.votes.approved}/{proposal.votes.attended > 0 ? proposal.votes.attended : proposal.votes.total}
+                                    {proposal.votes.attended > 0 && (
+                                      <span className="text-muted-foreground ml-1">
+                                        ({Math.round((proposal.votes.approved / proposal.votes.attended) * 100)}%)
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                                <Progress 
+                                  className="h-2" 
+                                  value={proposal.votes.attended > 0 
+                                    ? (proposal.votes.approved / proposal.votes.attended) * 100 
+                                    : 0
+                                  } 
+                                />
+                                
+                                {proposal.type === 'important' && (
+                                  <>
+                                    <div className="flex justify-between text-xs">
+                                      <span>土地持分同意</span>
+                                      <span className="font-medium">
+                                        {proposal.votes.landShareApproved}%
+                                      </span>
+                                    </div>
+                                    <Progress 
+                                      className="h-2 bg-secondary" 
+                                      value={proposal.votes.landShareApproved} 
+                                    />
+                                    <div className="flex justify-between text-xs">
+                                      <span>建物持分同意</span>
+                                      <span className="font-medium">
+                                        {proposal.votes.buildingShareApproved}%
+                                      </span>
+                                    </div>
+                                    <Progress 
+                                      className="h-2 bg-secondary" 
+                                      value={proposal.votes.buildingShareApproved} 
+                                    />
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">尚未開始投票</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              {(proposal.status === 'pending' || proposal.status === 'voting') && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  title="議案投票"
+                                  onClick={() => handleOpenVoting(proposal)}
+                                >
+                                  <Vote className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="icon" title="查看">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" title="編輯">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" title="刪除" className="text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                          沒有找到符合條件的議案資料
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        /* Proposal Voting Interface */
+        <>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsVotingMode(false)}
+            className="mb-4"
+          >
+            返回議案列表
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                匯出
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <FileText className="h-4 w-4 mr-2" />
-                匯出 PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="h-4 w-4 mr-2" />
-                匯出 Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>議案資料</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-            <div className="relative w-full sm:w-96">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="搜尋議案編號、標題、說明..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="text-sm text-muted-foreground">
-              總計 {filteredProposals.length} 筆資料
-            </div>
-          </div>
-          
-          <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="all">全部議案</TabsTrigger>
-              <TabsTrigger value="important">重要議案</TabsTrigger>
-              <TabsTrigger value="normal">一般議案</TabsTrigger>
-              <TabsTrigger value="approved">已通過</TabsTrigger>
-              <TabsTrigger value="rejected">未通過</TabsTrigger>
-              <TabsTrigger value="pending">待表決</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">議案編號</TableHead>
-                  <TableHead>議案名稱</TableHead>
-                  <TableHead>議案類型</TableHead>
-                  <TableHead>所屬會議</TableHead>
-                  <TableHead>表決結果</TableHead>
-                  <TableHead>表決狀況</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProposals.length > 0 ? (
-                  filteredProposals.map((proposal) => (
-                    <TableRow key={proposal.id}>
-                      <TableCell className="font-medium">{proposal.number}</TableCell>
-                      <TableCell>
-                        <div>{proposal.title}</div>
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {proposal.description}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {proposal.type === 'important' ? (
-                          <Badge variant="default" className="bg-amber-500">重要議案</Badge>
-                        ) : (
-                          <Badge variant="outline">一般議案</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>{proposal.meetingTitle}</TableCell>
-                      <TableCell>{getStatusBadge(proposal.status)}</TableCell>
-                      <TableCell>
-                        {proposal.status !== 'pending' ? (
-                          <div className="space-y-2 max-w-[180px]">
-                            <div className="flex justify-between text-xs">
-                              <span>同意票</span>
-                              <span className="font-medium">
-                                {proposal.votes.approved}/{proposal.votes.attended}
-                                <span className="text-muted-foreground ml-1">
-                                  ({Math.round((proposal.votes.approved / proposal.votes.attended) * 100)}%)
-                                </span>
-                              </span>
-                            </div>
-                            <Progress className="h-2" value={(proposal.votes.approved / proposal.votes.attended) * 100} />
-                            
-                            {proposal.type === 'important' && (
-                              <>
-                                <div className="flex justify-between text-xs">
-                                  <span>土地持分同意</span>
-                                  <span className="font-medium">
-                                    {proposal.votes.landShareApproved}%
-                                  </span>
-                                </div>
-                                <Progress 
-                                  className="h-2 bg-secondary" 
-                                  value={proposal.votes.landShareApproved} 
-                                />
-                                <div className="flex justify-between text-xs">
-                                  <span>建物持分同意</span>
-                                  <span className="font-medium">
-                                    {proposal.votes.buildingShareApproved}%
-                                  </span>
-                                </div>
-                                <Progress 
-                                  className="h-2 bg-secondary" 
-                                  value={proposal.votes.buildingShareApproved} 
-                                />
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">尚未開始投票</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {proposal.status === 'pending' && (
-                            <Button variant="ghost" size="icon" title="開始投票">
-                              <Vote className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" title="查看">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="編輯">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="刪除" className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                      沒有找到符合條件的議案資料
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+          {selectedProposal && (
+            <ProposalVoting 
+              proposal={selectedProposal}
+              onUpdate={handleUpdateProposal}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

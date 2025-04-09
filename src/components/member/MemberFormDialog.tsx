@@ -22,14 +22,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { generateMemberId, getFilters } from '@/services/memberService';
 
 // Form validation schema
 const memberFormSchema = z.object({
-  memberId: z.string().min(3, { message: '會員編號至少需要3個字元' }),
   idNumber: z.string().min(8, { message: '身分證號碼格式錯誤' }),
   name: z.string().min(2, { message: '姓名至少需要2個字元' }),
-  city: z.string().min(2, { message: '請輸入縣市名稱' }),
-  district: z.string().min(2, { message: '請輸入區域名稱' }),
+  city: z.string().min(2, { message: '請選擇縣市名稱' }),
+  district: z.string().min(2, { message: '請選擇區域名稱' }),
   section: z.string().min(1, { message: '請輸入段名稱' }),
   subSection: z.string().min(1, { message: '請輸入小段名稱' }),
   landNumber: z.string().min(1, { message: '請輸入地號' }),
@@ -76,11 +83,14 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
 }) => {
   const isEditMode = !!member;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cities, setCities] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<{[key: string]: string[]}>({});
+  const [selectedCity, setSelectedCity] = useState<string>('台北市');
+  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
-      memberId: '',
       idNumber: '',
       name: '',
       city: '台北市',
@@ -96,13 +106,63 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
     },
   });
 
+  // Load available city and district filters
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const { cities: citiesData, districts: districtsData } = await getFilters();
+        setCities(citiesData);
+        setDistricts(districtsData);
+        
+        // Initialize available districts
+        if (member?.city && districtsData[member.city]) {
+          setSelectedCity(member.city);
+          setAvailableDistricts(districtsData[member.city]);
+        } else if (districtsData['台北市']) {
+          setAvailableDistricts(districtsData['台北市']);
+        }
+      } catch (error) {
+        console.error('Error loading location filters:', error);
+      }
+    };
+    
+    loadFilters();
+  }, [member]);
+
+  // Update districts when city changes
+  useEffect(() => {
+    if (districts[selectedCity]) {
+      setAvailableDistricts(districts[selectedCity]);
+      
+      // Set the first district as default if current selection is not in the new city
+      const currentDistrict = form.getValues('district');
+      if (!districts[selectedCity].includes(currentDistrict)) {
+        form.setValue('district', districts[selectedCity][0]);
+      }
+    }
+  }, [selectedCity, districts, form]);
+
   // Update form values when editing a member
   useEffect(() => {
     if (member) {
-      form.reset(member);
+      form.reset({
+        idNumber: member.idNumber,
+        name: member.name,
+        city: member.city,
+        district: member.district,
+        section: member.section,
+        subSection: member.subSection,
+        landNumber: member.landNumber,
+        landShare: member.landShare,
+        landArea: member.landArea,
+        buildingNumber: member.buildingNumber,
+        buildingShare: member.buildingShare,
+        buildingArea: member.buildingArea,
+      });
+      
+      setSelectedCity(member.city);
     } else {
       form.reset({
-        memberId: '',
         idNumber: '',
         name: '',
         city: '台北市',
@@ -116,6 +176,8 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
         buildingShare: '',
         buildingArea: '',
       });
+      
+      setSelectedCity('台北市');
     }
   }, [member, form]);
 
@@ -146,19 +208,12 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="memberId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>會員編號</FormLabel>
-                    <FormControl>
-                      <Input {...field} readOnly={readonly} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {isEditMode && (
+                <FormItem className="flex flex-col space-y-1.5">
+                  <FormLabel>會員編號</FormLabel>
+                  <Input value={member?.memberId || ''} readOnly className="bg-gray-100" />
+                </FormItem>
+              )}
 
               <FormField
                 control={form.control}
@@ -197,9 +252,28 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>縣市</FormLabel>
-                        <FormControl>
-                          <Input {...field} readOnly={readonly} />
-                        </FormControl>
+                        <Select
+                          disabled={readonly}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedCity(value);
+                          }}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選擇縣市" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {cities.map((city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -211,9 +285,25 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>區域</FormLabel>
-                        <FormControl>
-                          <Input {...field} readOnly={readonly} />
-                        </FormControl>
+                        <Select
+                          disabled={readonly}
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選擇區域" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableDistricts.map((district) => (
+                              <SelectItem key={district} value={district}>
+                                {district}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -239,9 +329,22 @@ const MemberFormDialog: React.FC<MemberFormDialogProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>小段</FormLabel>
-                        <FormControl>
-                          <Input {...field} readOnly={readonly} />
-                        </FormControl>
+                        <Select
+                          disabled={readonly}
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選擇小段" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="一小段">一小段</SelectItem>
+                            <SelectItem value="二小段">二小段</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
