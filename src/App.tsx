@@ -58,9 +58,9 @@ function App() {
                         <Route path="/board" element={<BoardManagement />} />
                         <Route path="/proposals" element={<ProposalManagement />} />
                         <Route path="/reports" element={<Reports />} />
+                        <Route path="/real-estate" element={<RealEstateManagement />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/database" element={<DatabaseManagement />} />
-                        <Route path="/real-estate" element={<RealEstateManagement />} />
                       </Route>
                       
                       {/* Catch-all route */}

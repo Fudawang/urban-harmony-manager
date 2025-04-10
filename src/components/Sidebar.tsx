@@ -12,7 +12,8 @@ import {
   LogIn,
   ChevronLeft,
   Newspaper,
-  Shield
+  Shield,
+  Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -131,6 +132,7 @@ const Sidebar: React.FC = () => {
                 <NavItem to="/meetings" icon={<Calendar size={18} />} label="會議管理" />
                 <NavItem to="/board" icon={<Users size={18} />} label="理監事管理" />
                 <NavItem to="/proposals" icon={<ClipboardList size={18} />} label="議案管理" />
+                <NavItem to="/real-estate" icon={<Building size={18} />} label="不動產管理" />
                 <NavItem to="/reports" icon={<FileText size={18} />} label="報表輸出" />
                 <NavItem to="/settings" icon={<Settings size={18} />} label="系統設定" />
               </>
