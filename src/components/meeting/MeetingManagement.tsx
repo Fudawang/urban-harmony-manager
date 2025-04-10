@@ -44,6 +44,7 @@ import {
   searchMeetings 
 } from '@/services/meetingService';
 
+// Use the imported type directly without redefining it
 type Meeting = MeetingFromService;
 
 const MeetingManagement: React.FC = () => {
