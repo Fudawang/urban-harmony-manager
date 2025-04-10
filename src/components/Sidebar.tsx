@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   Newspaper,
   Shield,
-  Building
+  Building,
+  Landmark
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';

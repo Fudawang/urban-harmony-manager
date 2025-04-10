@@ -26,3 +26,14 @@ export interface RealEstateProperty {
   status: PropertyStatus;
   lastUpdated: string;
 }
+
+// Member property ownership records
+export interface MemberPropertyOwnership {
+  id: string;
+  memberId: string;
+  propertyId: string;
+  propertyType: PropertyType;
+  ownershipType: OwnershipType;
+  ownershipRatio: string;
+  notes?: string;
+}
