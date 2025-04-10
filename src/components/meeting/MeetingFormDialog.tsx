@@ -46,7 +46,7 @@ const meetingFormSchema = z.object({
     required_error: '請選擇日期',
   }),
   location: z.string().min(2, { message: '請輸入會議地點' }),
-  status: z.enum(['upcoming', 'completed'], {
+  status: z.enum(['upcoming', 'in-progress', 'completed'], {
     required_error: '請選擇會議狀態',
   }),
   totalMembers: z.coerce.number().min(1, { message: '總人數必須大於0' }),
@@ -64,7 +64,7 @@ type Meeting = {
   title: string;
   date: string;
   location: string;
-  status: 'upcoming' | 'completed';
+  status: 'upcoming' | 'in-progress' | 'completed';
   attendees: number;
   totalMembers: number;
   documents: number;
@@ -75,6 +75,7 @@ interface MeetingFormDialogProps {
   onClose: () => void;
   meeting?: Meeting;
   onSubmit: (data: Omit<Meeting, 'id'>) => Promise<void>;
+  readonly?: boolean;
 }
 
 const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
@@ -82,6 +83,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
   onClose,
   meeting,
   onSubmit,
+  readonly = false,
 }) => {
   const isEditMode = !!meeting;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,7 +169,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? '編輯會議資料' : '新增會議'}</DialogTitle>
+          <DialogTitle>{isEditMode ? (readonly ? '查看會議資料' : '編輯會議資料') : '新增會議'}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -180,7 +182,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>會議標題</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,6 +199,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                       value={field.value}
+                      disabled={readonly}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -220,7 +223,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>屆次</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" min="1" />
+                      <Input {...field} type="number" min="1" readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +237,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>第次</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" min="1" />
+                      <Input {...field} type="number" min="1" readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -248,7 +251,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem className="flex flex-col">
                     <FormLabel>會議日期</FormLabel>
                     <Popover>
-                      <PopoverTrigger asChild>
+                      <PopoverTrigger asChild disabled={readonly}>
                         <FormControl>
                           <Button
                             variant={"outline"}
@@ -268,7 +271,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date < new Date("1900-01-01")}
+                          disabled={(date) => date < new Date("1900-01-01") || readonly}
                           initialFocus
                         />
                       </PopoverContent>
@@ -285,7 +288,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>會議地點</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -302,6 +305,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                       value={field.value}
+                      disabled={readonly}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -310,6 +314,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="upcoming">即將舉行</SelectItem>
+                        <SelectItem value="in-progress">進行中</SelectItem>
                         <SelectItem value="completed">已完成</SelectItem>
                       </SelectContent>
                     </Select>
@@ -325,7 +330,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                   <FormItem>
                     <FormLabel>總人數</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" min="1" />
+                      <Input {...field} type="number" min="1" readOnly={readonly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -345,6 +350,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                         onChange={(e) => onChange(e.target.value === '' ? undefined : parseInt(e.target.value))} 
                         type="number" 
                         min="0"
+                        readOnly={readonly}
                       />
                     </FormControl>
                     <FormMessage />
@@ -365,6 +371,7 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
                         onChange={(e) => onChange(e.target.value === '' ? undefined : parseInt(e.target.value))} 
                         type="number" 
                         min="0" 
+                        readOnly={readonly}
                       />
                     </FormControl>
                     <FormMessage />
@@ -375,11 +382,13 @@ const MeetingFormDialog: React.FC<MeetingFormDialogProps> = ({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                取消
+                {readonly ? '關閉' : '取消'}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? '處理中...' : isEditMode ? '更新' : '新增'}
-              </Button>
+              {!readonly && (
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? '處理中...' : isEditMode ? '更新' : '新增'}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </Form>
