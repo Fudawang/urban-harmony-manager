@@ -1,59 +1,20 @@
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle, 
-  CardFooter 
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Building, 
   Plus, 
-  Search, 
-  FileText, 
-  Pencil, 
-  Trash,
-  MapPin,
   Square,
   Users,
   Layers
 } from 'lucide-react';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-type RealEstateProperty = {
-  id: string;
-  address: string;
-  type: '土地' | '建物' | '土地及建物';
-  area: number;  // in square meters
-  ownerCount: number;
-  district: string;
-  section: string;
-  number: string;
-  status: '更新前' | '更新後' | '其他';
-  lastUpdated: string;
-};
+import { RealEstateProperty } from '@/types/realEstate';
+import PropertyTable from './real-estate/PropertyTable';
+import PropertyForm from './real-estate/PropertyForm';
+import PropertyFilters from './real-estate/PropertyFilters';
+import OwnerManagement from './real-estate/OwnerManagement';
 
 const RealEstateManagement: React.FC = () => {
   const [properties, setProperties] = useState<RealEstateProperty[]>([
@@ -123,7 +84,8 @@ const RealEstateManagement: React.FC = () => {
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
   const [isAddingProperty, setIsAddingProperty] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("properties");
+  const [activePropertyTab, setActivePropertyTab] = useState("all");
   
   const [newProperty, setNewProperty] = useState<Omit<RealEstateProperty, 'id' | 'lastUpdated'>>({
     address: '',
@@ -147,9 +109,9 @@ const RealEstateManagement: React.FC = () => {
     
     // Filter by tab selection
     const matchesTab = 
-      activeTab === "all" || 
-      (activeTab === "land" && (property.type === '土地' || property.type === '土地及建物')) ||
-      (activeTab === "building" && (property.type === '建物' || property.type === '土地及建物'));
+      activePropertyTab === "all" || 
+      (activePropertyTab === "land" && (property.type === '土地' || property.type === '土地及建物')) ||
+      (activePropertyTab === "building" && (property.type === '建物' || property.type === '土地及建物'));
     
     return matchesSearch && matchesType && matchesStatus && matchesTab;
   });
@@ -192,357 +154,103 @@ const RealEstateManagement: React.FC = () => {
     toast.success('已刪除不動產');
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewProperty({
-      ...newProperty,
-      [name]: name === 'area' || name === 'ownerCount' ? parseFloat(value) || 0 : value,
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setNewProperty({
-      ...newProperty,
-      [name]: value,
-    });
-  };
-
   return (
     <div className="page-container space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="page-title">不動產管理</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsAddingProperty(true)} className="gap-1">
-            <Plus size={16} />
-            新增不動產
-          </Button>
-        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Search size={20} className="text-urban-600" />
-            搜尋與篩選
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <Label htmlFor="search">關鍵字搜尋</Label>
-              <Input
-                id="search"
-                placeholder="搜尋地址、地號或行政區"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="type-filter">類型</Label>
-              <Select value={filterType} onValueChange={(value) => setFilterType(value || undefined)}>
-                <SelectTrigger id="type-filter">
-                  <SelectValue placeholder="全部類型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部類型</SelectItem>
-                  <SelectItem value="土地">土地</SelectItem>
-                  <SelectItem value="建物">建物</SelectItem>
-                  <SelectItem value="土地及建物">土地及建物</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="status-filter">狀態</Label>
-              <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value || undefined)}>
-                <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="全部狀態" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部狀態</SelectItem>
-                  <SelectItem value="更新前">更新前</SelectItem>
-                  <SelectItem value="更新後">更新後</SelectItem>
-                  <SelectItem value="其他">其他</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {isAddingProperty && (
-        <Card>
-          <CardHeader>
-            <CardTitle>新增不動產</CardTitle>
-            <CardDescription>
-              填寫以下資訊以新增不動產資料
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={newProperty.address}
-                  onChange={handleInputChange}
-                  placeholder="例：台北市中山區中山北路一段85號"
-                />
-              </div>
-              <div>
-                <Label htmlFor="type">類型</Label>
-                <Select 
-                  value={newProperty.type} 
-                  onValueChange={(value) => handleSelectChange('type', value as RealEstateProperty['type'])}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue placeholder="選擇類型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="土地">土地</SelectItem>
-                    <SelectItem value="建物">建物</SelectItem>
-                    <SelectItem value="土地及建物">土地及建物</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="district">行政區</Label>
-                <Input
-                  id="district"
-                  name="district"
-                  value={newProperty.district}
-                  onChange={handleInputChange}
-                  placeholder="例：中山區"
-                />
-              </div>
-              <div>
-                <Label htmlFor="section">地段</Label>
-                <Input
-                  id="section"
-                  name="section"
-                  value={newProperty.section}
-                  onChange={handleInputChange}
-                  placeholder="例：中山段"
-                />
-              </div>
-              <div>
-                <Label htmlFor="number">地號/建號</Label>
-                <Input
-                  id="number"
-                  name="number"
-                  value={newProperty.number}
-                  onChange={handleInputChange}
-                  placeholder="例：123-45"
-                />
-              </div>
-              <div>
-                <Label htmlFor="area">面積（平方公尺）</Label>
-                <Input
-                  id="area"
-                  name="area"
-                  type="number"
-                  value={newProperty.area || ''}
-                  onChange={handleInputChange}
-                  placeholder="例：120.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="ownerCount">所有權人數</Label>
-                <Input
-                  id="ownerCount"
-                  name="ownerCount"
-                  type="number"
-                  value={newProperty.ownerCount || ''}
-                  onChange={handleInputChange}
-                  placeholder="例：1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="status">狀態</Label>
-                <Select 
-                  value={newProperty.status} 
-                  onValueChange={(value) => handleSelectChange('status', value as RealEstateProperty['status'])}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="選擇狀態" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="更新前">更新前</SelectItem>
-                    <SelectItem value="更新後">更新後</SelectItem>
-                    <SelectItem value="其他">其他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setIsAddingProperty(false)}>
-              取消
-            </Button>
-            <Button onClick={handleAddProperty}>
-              新增
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <Layers size={16} />
-            全部不動產
-          </TabsTrigger>
-          <TabsTrigger value="land" className="flex items-center gap-2">
-            <Square size={16} />
-            土地清冊
-          </TabsTrigger>
-          <TabsTrigger value="building" className="flex items-center gap-2">
+      <Tabs defaultValue="properties" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="properties" className="flex items-center gap-2">
             <Building size={16} />
-            建物清冊
+            不動產資料
+          </TabsTrigger>
+          <TabsTrigger value="owners" className="flex items-center gap-2">
+            <Users size={16} />
+            所有權人資料
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="all">
-          <PropertyTable 
-            properties={filteredProperties} 
-            onDelete={handleDeleteProperty}
-            title="不動產清單"
-            description="管理都更會範圍內的全部不動產資料"
+        <TabsContent value="properties" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">不動產資料管理</h2>
+            <Button onClick={() => setIsAddingProperty(true)} className="gap-1">
+              <Plus size={16} />
+              新增不動產
+            </Button>
+          </div>
+          
+          <PropertyFilters 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterType={filterType}
+            setFilterType={setFilterType}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
           />
+          
+          {isAddingProperty && (
+            <PropertyForm 
+              newProperty={newProperty}
+              setNewProperty={setNewProperty}
+              handleAddProperty={handleAddProperty}
+              onCancel={() => setIsAddingProperty(false)}
+            />
+          )}
+          
+          <Tabs defaultValue="all" value={activePropertyTab} onValueChange={setActivePropertyTab}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="all" className="flex items-center gap-2">
+                <Layers size={16} />
+                全部不動產
+              </TabsTrigger>
+              <TabsTrigger value="land" className="flex items-center gap-2">
+                <Square size={16} />
+                土地清冊
+              </TabsTrigger>
+              <TabsTrigger value="building" className="flex items-center gap-2">
+                <Building size={16} />
+                建物清冊
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all">
+              <PropertyTable 
+                properties={filteredProperties} 
+                onDelete={handleDeleteProperty}
+                title="不動產清單"
+                description="管理都更會範圍內的全部不動產資料"
+              />
+            </TabsContent>
+            
+            <TabsContent value="land">
+              <PropertyTable 
+                properties={filteredProperties.filter(p => p.type === '土地' || p.type === '土地及建物')} 
+                onDelete={handleDeleteProperty}
+                title="土地清冊"
+                description="管理都更會範圍內的土地資料"
+                icon={<Square size={20} className="text-urban-600" />}
+              />
+            </TabsContent>
+            
+            <TabsContent value="building">
+              <PropertyTable 
+                properties={filteredProperties.filter(p => p.type === '建物' || p.type === '土地及建物')} 
+                onDelete={handleDeleteProperty} 
+                title="建物清冊"
+                description="管理都更會範圍內的建物資料"
+                icon={<Building size={20} className="text-urban-600" />}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         
-        <TabsContent value="land">
-          <PropertyTable 
-            properties={filteredProperties.filter(p => p.type === '土地' || p.type === '土地及建物')} 
-            onDelete={handleDeleteProperty}
-            title="土地清冊"
-            description="管理都更會範圍內的土地資料"
-            icon={<Square size={20} className="text-urban-600" />}
-          />
-        </TabsContent>
-        
-        <TabsContent value="building">
-          <PropertyTable 
-            properties={filteredProperties.filter(p => p.type === '建物' || p.type === '土地及建物')} 
-            onDelete={handleDeleteProperty} 
-            title="建物清冊"
-            description="管理都更會範圍內的建物資料"
-            icon={<Building size={20} className="text-urban-600" />}
-          />
+        <TabsContent value="owners">
+          <OwnerManagement />
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-type PropertyTableProps = {
-  properties: RealEstateProperty[];
-  onDelete: (id: string) => void;
-  title: string;
-  description: string;
-  icon?: React.ReactNode;
-};
-
-const PropertyTable: React.FC<PropertyTableProps> = ({ 
-  properties, 
-  onDelete,
-  title,
-  description,
-  icon = <Building size={20} className="text-urban-600" />
-}) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>地址</TableHead>
-              <TableHead>類型</TableHead>
-              <TableHead>地段/地號</TableHead>
-              <TableHead>面積(m²)</TableHead>
-              <TableHead>所有權人數</TableHead>
-              <TableHead>狀態</TableHead>
-              <TableHead className="text-right">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {properties.map((property) => (
-              <TableRow key={property.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-urban-600" />
-                    {property.address}
-                  </div>
-                </TableCell>
-                <TableCell>{property.type}</TableCell>
-                <TableCell>{property.section} {property.number}</TableCell>
-                <TableCell>{property.area.toFixed(1)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Users size={14} className="text-urban-600" />
-                    {property.ownerCount}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    property.status === '更新前' ? 'bg-orange-100 text-orange-800' :
-                    property.status === '更新後' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {property.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2"
-                    >
-                      <FileText size={14} />
-                      <span className="sr-only">詳情</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 px-2"
-                    >
-                      <Pencil size={14} />
-                      <span className="sr-only">編輯</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 px-2 text-destructive hover:text-destructive"
-                      onClick={() => onDelete(property.id)}
-                    >
-                      <Trash size={14} />
-                      <span className="sr-only">刪除</span>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {properties.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                  沒有找到符合條件的不動產資料
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
   );
 };
 
