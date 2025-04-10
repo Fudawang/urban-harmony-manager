@@ -20,6 +20,7 @@ import ProposalManagement from "./components/ProposalManagement";
 import Reports from "./components/Reports";
 import Settings from "./components/Settings";
 import DatabaseManagement from "./components/DatabaseManagement";
+import RealEstateManagement from "./components/RealEstateManagement";
 import AuthLayout from "./components/AuthLayout";
 import PublicInfo from "./pages/PublicInfo";
 
@@ -59,6 +60,7 @@ function App() {
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/database" element={<DatabaseManagement />} />
+                        <Route path="/real-estate" element={<RealEstateManagement />} />
                       </Route>
                       
                       {/* Catch-all route */}
