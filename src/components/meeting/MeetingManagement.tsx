@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,9 +44,11 @@ import {
   searchMeetings 
 } from '@/services/meetingService';
 
+type MeetingType = Meeting;
+
 const MeetingManagement: React.FC = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
+  const [meetings, setMeetings] = useState<MeetingType[]>([]);
+  const [filteredMeetings, setFilteredMeetings] = useState<MeetingType[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +56,7 @@ const MeetingManagement: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingType | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isCheckInMode, setIsCheckInMode] = useState(false);
 
@@ -99,7 +100,7 @@ const MeetingManagement: React.FC = () => {
     }
   };
 
-  const handleAddMeeting = async (data: Omit<Meeting, 'id'>) => {
+  const handleAddMeeting = async (data: Omit<MeetingType, 'id'>) => {
     try {
       await createMeeting(data);
       await fetchMeetings();
@@ -111,7 +112,7 @@ const MeetingManagement: React.FC = () => {
     }
   };
 
-  const handleEditMeeting = async (data: Omit<Meeting, 'id'>) => {
+  const handleEditMeeting = async (data: Omit<MeetingType, 'id'>) => {
     if (!selectedMeeting) return;
     try {
       await updateMeeting(selectedMeeting.id, data);
@@ -137,27 +138,27 @@ const MeetingManagement: React.FC = () => {
     }
   };
 
-  const openEditDialog = (meeting: Meeting) => {
+  const openEditDialog = (meeting: MeetingType) => {
     setSelectedMeeting(meeting);
     setIsEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (meeting: Meeting) => {
+  const openDeleteDialog = (meeting: MeetingType) => {
     setSelectedMeeting(meeting);
     setIsDeleteDialogOpen(true);
   };
 
-  const openViewDialog = (meeting: Meeting) => {
+  const openViewDialog = (meeting: MeetingType) => {
     setSelectedMeeting(meeting);
     setIsViewDialogOpen(true);
   };
 
-  const handleOpenCheckIn = (meeting: Meeting) => {
+  const handleOpenCheckIn = (meeting: MeetingType) => {
     setSelectedMeeting(meeting);
     setIsCheckInMode(true);
   };
 
-  const handleUpdateMeeting = (updatedMeeting: Meeting) => {
+  const handleUpdateMeeting = (updatedMeeting: MeetingType) => {
     setMeetings(meetings.map(m => m.id === updatedMeeting.id ? updatedMeeting : m));
     setSelectedMeeting(updatedMeeting);
   };
@@ -377,7 +378,6 @@ const MeetingManagement: React.FC = () => {
             />
           )}
           
-          {/* Only render DeleteMeetingDialog if selectedMeeting exists */}
           {selectedMeeting && (
             <DeleteMeetingDialog
               isOpen={isDeleteDialogOpen}
