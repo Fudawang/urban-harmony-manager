@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -28,7 +27,7 @@ import {
   Pencil, 
   Trash,
   MapPin,
-  SquareKilometer,
+  Square,
   Users
 } from 'lucide-react';
 import { 
@@ -40,7 +39,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from 'sonner';
 
-// Types for real estate properties
 type RealEstateProperty = {
   id: string;
   address: string;
@@ -55,7 +53,6 @@ type RealEstateProperty = {
 };
 
 const RealEstateManagement: React.FC = () => {
-  // Sample data for demonstration
   const [properties, setProperties] = useState<RealEstateProperty[]>([
     {
       id: "1",
@@ -100,7 +97,6 @@ const RealEstateManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
   const [isAddingProperty, setIsAddingProperty] = useState(false);
   
-  // New property form state
   const [newProperty, setNewProperty] = useState<Omit<RealEstateProperty, 'id' | 'lastUpdated'>>({
     address: '',
     type: '土地',
@@ -112,7 +108,6 @@ const RealEstateManagement: React.FC = () => {
     status: '更新前'
   });
 
-  // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     const matchesSearch = 
       property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,7 +120,6 @@ const RealEstateManagement: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Handle adding a new property
   const handleAddProperty = () => {
     if (!newProperty.address || !newProperty.district || !newProperty.number) {
       toast.error('請填寫必要欄位');
@@ -159,13 +153,11 @@ const RealEstateManagement: React.FC = () => {
     toast.success('已新增不動產');
   };
 
-  // Handle property deletion
   const handleDeleteProperty = (id: string) => {
     setProperties(properties.filter(property => property.id !== id));
     toast.success('已刪除不動產');
   };
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewProperty({
@@ -174,7 +166,6 @@ const RealEstateManagement: React.FC = () => {
     });
   };
 
-  // Handle select changes
   const handleSelectChange = (name: string, value: string) => {
     setNewProperty({
       ...newProperty,
