@@ -36,16 +36,13 @@ import MeetingFormDialog from './MeetingFormDialog';
 import DeleteMeetingDialog from './DeleteMeetingDialog';
 import MeetingCheckIn from './MeetingCheckIn';
 import { 
-  Meeting as MeetingFromService,
+  Meeting,
   getAllMeetings, 
   createMeeting, 
   updateMeeting, 
   deleteMeeting, 
   searchMeetings 
 } from '@/services/meetingService';
-
-// Use the imported type directly without redefining it
-type Meeting = MeetingFromService;
 
 const MeetingManagement: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
