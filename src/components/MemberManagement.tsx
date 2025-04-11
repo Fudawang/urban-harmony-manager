@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,8 @@ import {
   Trash2, 
   Eye, 
   FileText,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Loader2
 } from 'lucide-react';
 import {
   Table,
@@ -43,13 +45,15 @@ import MemberFormDialog from './member/MemberFormDialog';
 import DeleteMemberDialog from './member/DeleteMemberDialog';
 import { 
   Member,
-  PaginatedResponse,
+  PaginatedResponse 
+} from '@/services/memberService';
+import { 
   getAllMembers, 
   createMember, 
   updateMember, 
   deleteMember, 
   searchMembers 
-} from '@/services/memberService';
+} from '@/services/supabaseServices/memberService';
 
 // Format member ID card number for privacy
 const formatIdNumber = (idNumber: string) => {
@@ -129,6 +133,7 @@ const MemberManagement: React.FC = () => {
       toast.success('會員已成功新增');
       setCurrentPage(1); // Reset to first page after adding
       await fetchMembers();
+      setIsAddDialogOpen(false);
     } catch (error) {
       console.error('Error adding member:', error);
       toast.error('新增會員失敗');
@@ -142,6 +147,7 @@ const MemberManagement: React.FC = () => {
       await updateMember(selectedMember.id, data);
       toast.success('會員資料已更新');
       await fetchMembers();
+      setIsEditDialogOpen(false);
     } catch (error) {
       console.error('Error updating member:', error);
       toast.error('更新會員資料失敗');
@@ -155,6 +161,7 @@ const MemberManagement: React.FC = () => {
       await deleteMember(selectedMember.id);
       toast.success('會員已成功刪除');
       await fetchMembers();
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting member:', error);
       toast.error('刪除會員失敗');
@@ -384,7 +391,10 @@ const MemberManagement: React.FC = () => {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center h-24">
-                      正在載入會員資料...
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        正在載入會員資料...
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : members.length > 0 ? (

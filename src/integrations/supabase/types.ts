@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      board_members: {
+        Row: {
+          contact: string
+          created_at: string | null
+          end_date: string
+          id: string
+          is_active: boolean
+          member_id: string
+          name: string
+          position: string
+          start_date: string
+          term: number
+          title: string
+        }
+        Insert: {
+          contact: string
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean
+          member_id: string
+          name: string
+          position: string
+          start_date: string
+          term: number
+          title: string
+        }
+        Update: {
+          contact?: string
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          name?: string
+          position?: string
+          start_date?: string
+          term?: number
+          title?: string
+        }
+        Relationships: []
+      }
       installation_steps: {
         Row: {
           completed_at: string | null
@@ -36,6 +78,234 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_attendance: {
+        Row: {
+          building_share: string
+          check_in_time: string
+          created_at: string | null
+          id: string
+          land_share: string
+          meeting_id: string
+          member_id: string
+          member_name: string
+        }
+        Insert: {
+          building_share: string
+          check_in_time?: string
+          created_at?: string | null
+          id?: string
+          land_share: string
+          meeting_id: string
+          member_id: string
+          member_name: string
+        }
+        Update: {
+          building_share?: string
+          check_in_time?: string
+          created_at?: string | null
+          id?: string
+          land_share?: string
+          meeting_id?: string
+          member_id?: string
+          member_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_attendance_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_documents: {
+        Row: {
+          created_at: string | null
+          file_url: string
+          id: string
+          meeting_id: string
+          size: number
+          title: string
+          type: string
+          upload_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_url: string
+          id?: string
+          meeting_id: string
+          size: number
+          title: string
+          type: string
+          upload_date: string
+        }
+        Update: {
+          created_at?: string | null
+          file_url?: string
+          id?: string
+          meeting_id?: string
+          size?: number
+          title?: string
+          type?: string
+          upload_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_documents_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          attendance_stats: Json | null
+          attendees: number
+          check_in_enabled: boolean | null
+          created_at: string | null
+          date: string
+          documents: number
+          id: string
+          location: string
+          number: number
+          status: string
+          term: number
+          title: string
+          total_members: number
+          type: string
+        }
+        Insert: {
+          attendance_stats?: Json | null
+          attendees?: number
+          check_in_enabled?: boolean | null
+          created_at?: string | null
+          date: string
+          documents?: number
+          id?: string
+          location: string
+          number: number
+          status: string
+          term: number
+          title: string
+          total_members: number
+          type: string
+        }
+        Update: {
+          attendance_stats?: Json | null
+          attendees?: number
+          check_in_enabled?: boolean | null
+          created_at?: string | null
+          date?: string
+          documents?: number
+          id?: string
+          location?: string
+          number?: number
+          status?: string
+          term?: number
+          title?: string
+          total_members?: number
+          type?: string
+        }
+        Relationships: []
+      }
+      member_property_ownerships: {
+        Row: {
+          created_at: string | null
+          id: string
+          member_id: string
+          notes: string | null
+          ownership_ratio: string
+          ownership_type: string
+          property_id: string
+          property_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          ownership_ratio: string
+          ownership_type: string
+          property_id: string
+          property_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          ownership_ratio?: string
+          ownership_type?: string
+          property_id?: string
+          property_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_property_ownerships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "real_estate_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          building_area: string
+          building_number: string
+          building_share: string
+          city: string
+          created_at: string | null
+          district: string
+          id: string
+          id_number: string
+          land_area: string
+          land_number: string
+          land_share: string
+          member_id: string
+          name: string
+          section: string
+          sub_section: string
+        }
+        Insert: {
+          building_area: string
+          building_number: string
+          building_share: string
+          city: string
+          created_at?: string | null
+          district: string
+          id?: string
+          id_number: string
+          land_area: string
+          land_number: string
+          land_share: string
+          member_id: string
+          name: string
+          section: string
+          sub_section: string
+        }
+        Update: {
+          building_area?: string
+          building_number?: string
+          building_share?: string
+          city?: string
+          created_at?: string | null
+          district?: string
+          id?: string
+          id_number?: string
+          land_area?: string
+          land_number?: string
+          land_share?: string
+          member_id?: string
+          name?: string
+          section?: string
+          sub_section?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -57,6 +327,131 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: string | null
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          meeting_id: string
+          meeting_title: string
+          number: string
+          status: string
+          title: string
+          type: string
+          votes: Json
+          voting_enabled: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          meeting_id: string
+          meeting_title: string
+          number: string
+          status: string
+          title: string
+          type: string
+          votes: Json
+          voting_enabled?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          meeting_id?: string
+          meeting_title?: string
+          number?: string
+          status?: string
+          title?: string
+          type?: string
+          votes?: Json
+          voting_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      real_estate_owners: {
+        Row: {
+          contact_info: string
+          created_at: string | null
+          id: string
+          id_number: string
+          name: string
+          notes: string | null
+          ownership_ratio: string | null
+          ownership_type: string
+        }
+        Insert: {
+          contact_info: string
+          created_at?: string | null
+          id?: string
+          id_number: string
+          name: string
+          notes?: string | null
+          ownership_ratio?: string | null
+          ownership_type: string
+        }
+        Update: {
+          contact_info?: string
+          created_at?: string | null
+          id?: string
+          id_number?: string
+          name?: string
+          notes?: string | null
+          ownership_ratio?: string | null
+          ownership_type?: string
+        }
+        Relationships: []
+      }
+      real_estate_properties: {
+        Row: {
+          address: string
+          area: number
+          created_at: string | null
+          district: string
+          id: string
+          last_updated: string | null
+          number: string
+          owner_count: number
+          section: string
+          status: string
+          type: string
+        }
+        Insert: {
+          address: string
+          area: number
+          created_at?: string | null
+          district: string
+          id?: string
+          last_updated?: string | null
+          number: string
+          owner_count?: number
+          section: string
+          status: string
+          type: string
+        }
+        Update: {
+          address?: string
+          area?: number
+          created_at?: string | null
+          district?: string
+          id?: string
+          last_updated?: string | null
+          number?: string
+          owner_count?: number
+          section?: string
+          status?: string
+          type?: string
         }
         Relationships: []
       }
@@ -83,6 +478,50 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      votes: {
+        Row: {
+          building_share: string
+          created_at: string | null
+          decision: string
+          id: string
+          land_share: string
+          member_id: string
+          member_name: string
+          proposal_id: string
+          timestamp: string
+        }
+        Insert: {
+          building_share: string
+          created_at?: string | null
+          decision: string
+          id?: string
+          land_share: string
+          member_id: string
+          member_name: string
+          proposal_id: string
+          timestamp?: string
+        }
+        Update: {
+          building_share?: string
+          created_at?: string | null
+          decision?: string
+          id?: string
+          land_share?: string
+          member_id?: string
+          member_name?: string
+          proposal_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

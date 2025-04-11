@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RealEstateOwner } from '@/types/realEstate';
 import { 
   Card, 
@@ -12,7 +12,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -23,7 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   Users, 
-  User, 
   Search, 
   Plus, 
   Pencil, 
@@ -38,37 +36,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from 'sonner';
+import { getOwners, createOwner, deleteOwner } from '@/services/supabaseServices/realEstateService';
 
 const OwnerManagement: React.FC = () => {
-  const [owners, setOwners] = useState<RealEstateOwner[]>([
-    {
-      id: "1",
-      name: "王大明",
-      idNumber: "A123456789",
-      contactInfo: "0912-345-678",
-      ownershipType: "單一所有權"
-    },
-    {
-      id: "2",
-      name: "林小華",
-      idNumber: "B234567890",
-      contactInfo: "0923-456-789",
-      ownershipType: "共同持分",
-      ownershipRatio: "1/2"
-    },
-    {
-      id: "3",
-      name: "陳國強",
-      idNumber: "C345678901",
-      contactInfo: "0934-567-890",
-      ownershipType: "分別持分",
-      ownershipRatio: "30%"
-    }
-  ]);
-
+  const [owners, setOwners] = useState<RealEstateOwner[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingOwner, setIsAddingOwner] = useState(false);
   const [filterOwnershipType, setFilterOwnershipType] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newOwner, setNewOwner] = useState<Omit<RealEstateOwner, 'id'>>({
     name: '',
@@ -78,6 +53,23 @@ const OwnerManagement: React.FC = () => {
     ownershipRatio: '',
     notes: ''
   });
+
+  useEffect(() => {
+    fetchOwners();
+  }, []);
+
+  const fetchOwners = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getOwners();
+      setOwners(data);
+    } catch (error) {
+      console.error('Error fetching owners:', error);
+      toast.error('無法載入所有權人資料');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredOwners = owners.filter(owner => {
     const matchesSearch = 
@@ -90,38 +82,41 @@ const OwnerManagement: React.FC = () => {
     return matchesSearch && matchesType;
   });
 
-  const handleAddOwner = () => {
+  const handleAddOwner = async () => {
     if (!newOwner.name || !newOwner.idNumber) {
       toast.error('請填寫必要欄位');
       return;
     }
 
-    const newId = (owners.length + 1).toString();
-    
-    setOwners([
-      ...owners,
-      {
-        ...newOwner,
-        id: newId
-      }
-    ]);
-    
-    setIsAddingOwner(false);
-    setNewOwner({
-      name: '',
-      idNumber: '',
-      contactInfo: '',
-      ownershipType: '單一所有權',
-      ownershipRatio: '',
-      notes: ''
-    });
-    
-    toast.success('已新增所有權人');
+    try {
+      await createOwner(newOwner);
+      toast.success('已新增所有權人');
+      await fetchOwners();
+      
+      setIsAddingOwner(false);
+      setNewOwner({
+        name: '',
+        idNumber: '',
+        contactInfo: '',
+        ownershipType: '單一所有權',
+        ownershipRatio: '',
+        notes: ''
+      });
+    } catch (error) {
+      console.error('Error adding owner:', error);
+      toast.error('新增所有權人失敗');
+    }
   };
 
-  const handleDeleteOwner = (id: string) => {
-    setOwners(owners.filter(owner => owner.id !== id));
-    toast.success('已刪除所有權人');
+  const handleDeleteOwner = async (id: string) => {
+    try {
+      await deleteOwner(id);
+      toast.success('已刪除所有權人');
+      await fetchOwners();
+    } catch (error) {
+      console.error('Error deleting owner:', error);
+      toast.error('刪除所有權人失敗');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -177,7 +172,7 @@ const OwnerManagement: React.FC = () => {
                   <SelectValue placeholder="全部類型" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部類型</SelectItem>
+                  <SelectItem value="all">全部類型</SelectItem>
                   <SelectItem value="單一所有權">單一所有權</SelectItem>
                   <SelectItem value="共同持分">共同持分</SelectItem>
                   <SelectItem value="分別持分">分別持分</SelectItem>
@@ -290,70 +285,75 @@ const OwnerManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>姓名</TableHead>
-                <TableHead>身分證字號/統一編號</TableHead>
-                <TableHead>聯絡資訊</TableHead>
-                <TableHead>所有權類型</TableHead>
-                <TableHead>持分比例</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOwners.map((owner) => (
-                <TableRow key={owner.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <UserCheck size={16} className="text-urban-600" />
-                      {owner.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{owner.idNumber}</TableCell>
-                  <TableCell>{owner.contactInfo}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      owner.ownershipType === '單一所有權' ? 'bg-green-100 text-green-800' :
-                      owner.ownershipType === '共同持分' ? 'bg-blue-100 text-blue-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      {owner.ownershipType}
-                    </span>
-                  </TableCell>
-                  <TableCell>{owner.ownershipRatio || '-'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 px-2"
-                      >
-                        <Pencil size={14} />
-                        <span className="sr-only">編輯</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 px-2 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteOwner(owner.id)}
-                      >
-                        <Trash size={14} />
-                        <span className="sr-only">刪除</span>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredOwners.length === 0 && (
+          {isLoading ? (
+            <div className="flex justify-center py-8 text-muted-foreground">正在載入資料...</div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    沒有找到符合條件的所有權人資料
-                  </TableCell>
+                  <TableHead>姓名</TableHead>
+                  <TableHead>身分證字號/統一編號</TableHead>
+                  <TableHead>聯絡資訊</TableHead>
+                  <TableHead>所有權類型</TableHead>
+                  <TableHead>持分比例</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredOwners.length > 0 ? (
+                  filteredOwners.map((owner) => (
+                    <TableRow key={owner.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <UserCheck size={16} className="text-urban-600" />
+                          {owner.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{owner.idNumber}</TableCell>
+                      <TableCell>{owner.contactInfo}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          owner.ownershipType === '單一所有權' ? 'bg-green-100 text-green-800' :
+                          owner.ownershipType === '共同持分' ? 'bg-blue-100 text-blue-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {owner.ownershipType}
+                        </span>
+                      </TableCell>
+                      <TableCell>{owner.ownershipRatio || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-8 px-2"
+                          >
+                            <Pencil size={14} />
+                            <span className="sr-only">編輯</span>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-8 px-2 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteOwner(owner.id)}
+                          >
+                            <Trash size={14} />
+                            <span className="sr-only">刪除</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      沒有找到符合條件的所有權人資料
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

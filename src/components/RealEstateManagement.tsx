@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Building, 
@@ -15,77 +15,17 @@ import PropertyTable from './real-estate/PropertyTable';
 import PropertyForm from './real-estate/PropertyForm';
 import PropertyFilters from './real-estate/PropertyFilters';
 import OwnerManagement from './real-estate/OwnerManagement';
+import { getProperties, createProperty, deleteProperty } from '@/services/supabaseServices/realEstateService';
 
 const RealEstateManagement: React.FC = () => {
-  const [properties, setProperties] = useState<RealEstateProperty[]>([
-    {
-      id: "1",
-      address: "台北市中山區中山北路一段85號",
-      type: "土地及建物",
-      area: 120.5,
-      ownerCount: 3,
-      district: "中山區",
-      section: "中山段",
-      number: "123-45",
-      status: "更新前",
-      lastUpdated: "2024-04-08"
-    },
-    {
-      id: "2",
-      address: "台北市信義區松仁路58號",
-      type: "建物",
-      area: 85.2,
-      ownerCount: 1,
-      district: "信義區",
-      section: "信義段",
-      number: "987-32",
-      status: "更新後",
-      lastUpdated: "2024-04-07"
-    },
-    {
-      id: "3",
-      address: "台北市大安區和平東路二段106號",
-      type: "土地",
-      area: 250.0,
-      ownerCount: 5,
-      district: "大安區",
-      section: "大安段",
-      number: "456-78",
-      status: "其他",
-      lastUpdated: "2024-04-06"
-    },
-    {
-      id: "4",
-      address: "台北市信義區基隆路一段178號",
-      type: "土地",
-      area: 320.0,
-      ownerCount: 2,
-      district: "信義區",
-      section: "信義段",
-      number: "567-89",
-      status: "更新前",
-      lastUpdated: "2024-04-05"
-    },
-    {
-      id: "5",
-      address: "台北市大安區敦化南路二段148號",
-      type: "建物",
-      area: 95.7,
-      ownerCount: 1,
-      district: "大安區",
-      section: "大安段",
-      number: "234-56",
-      status: "更新後",
-      lastUpdated: "2024-04-04"
-    },
-  ]);
-
+  const [properties, setProperties] = useState<RealEstateProperty[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
   const [isAddingProperty, setIsAddingProperty] = useState(false);
   const [activeTab, setActiveTab] = useState("properties");
   const [activePropertyTab, setActivePropertyTab] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newProperty, setNewProperty] = useState<Omit<RealEstateProperty, 'id' | 'lastUpdated'>>({
     address: '',
@@ -98,14 +38,31 @@ const RealEstateManagement: React.FC = () => {
     status: '更新前'
   });
 
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getProperties();
+      setProperties(data);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      toast.error('無法載入不動產資料');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredProperties = properties.filter(property => {
     const matchesSearch = 
       property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       property.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       property.district.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesType = !filterType || property.type === filterType;
-    const matchesStatus = !filterStatus || property.status === filterStatus;
+    const matchesType = !filterType || filterType === 'all' || property.type === filterType;
+    const matchesStatus = !filterStatus || filterStatus === 'all' || property.status === filterStatus;
     
     // Filter by tab selection
     const matchesTab = 
@@ -116,42 +73,43 @@ const RealEstateManagement: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus && matchesTab;
   });
 
-  const handleAddProperty = () => {
+  const handleAddProperty = async () => {
     if (!newProperty.address || !newProperty.district || !newProperty.number) {
       toast.error('請填寫必要欄位');
       return;
     }
 
-    const newId = (properties.length + 1).toString();
-    const today = new Date().toISOString().split('T')[0];
-    
-    setProperties([
-      ...properties,
-      {
-        ...newProperty,
-        id: newId,
-        lastUpdated: today
-      }
-    ]);
-    
-    setIsAddingProperty(false);
-    setNewProperty({
-      address: '',
-      type: '土地',
-      area: 0,
-      ownerCount: 0,
-      district: '',
-      section: '',
-      number: '',
-      status: '更新前'
-    });
-    
-    toast.success('已新增不動產');
+    try {
+      await createProperty(newProperty);
+      toast.success('已新增不動產');
+      await fetchProperties();
+      
+      setIsAddingProperty(false);
+      setNewProperty({
+        address: '',
+        type: '土地',
+        area: 0,
+        ownerCount: 0,
+        district: '',
+        section: '',
+        number: '',
+        status: '更新前'
+      });
+    } catch (error) {
+      console.error('Error adding property:', error);
+      toast.error('新增不動產失敗');
+    }
   };
 
-  const handleDeleteProperty = (id: string) => {
-    setProperties(properties.filter(property => property.id !== id));
-    toast.success('已刪除不動產');
+  const handleDeleteProperty = async (id: string) => {
+    try {
+      await deleteProperty(id);
+      toast.success('已刪除不動產');
+      await fetchProperties();
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      toast.error('刪除不動產失敗');
+    }
   };
 
   return (
@@ -216,32 +174,44 @@ const RealEstateManagement: React.FC = () => {
             </TabsList>
             
             <TabsContent value="all">
-              <PropertyTable 
-                properties={filteredProperties} 
-                onDelete={handleDeleteProperty}
-                title="不動產清單"
-                description="管理都更會範圍內的全部不動產資料"
-              />
+              {isLoading ? (
+                <div className="flex justify-center py-8 text-muted-foreground">正在載入資料...</div>
+              ) : (
+                <PropertyTable 
+                  properties={filteredProperties} 
+                  onDelete={handleDeleteProperty}
+                  title="不動產清單"
+                  description="管理都更會範圍內的全部不動產資料"
+                />
+              )}
             </TabsContent>
             
             <TabsContent value="land">
-              <PropertyTable 
-                properties={filteredProperties.filter(p => p.type === '土地' || p.type === '土地及建物')} 
-                onDelete={handleDeleteProperty}
-                title="土地清冊"
-                description="管理都更會範圍內的土地資料"
-                icon={<Square size={20} className="text-urban-600" />}
-              />
+              {isLoading ? (
+                <div className="flex justify-center py-8 text-muted-foreground">正在載入資料...</div>
+              ) : (
+                <PropertyTable 
+                  properties={filteredProperties.filter(p => p.type === '土地' || p.type === '土地及建物')} 
+                  onDelete={handleDeleteProperty}
+                  title="土地清冊"
+                  description="管理都更會範圍內的土地資料"
+                  icon={<Square size={20} className="text-urban-600" />}
+                />
+              )}
             </TabsContent>
             
             <TabsContent value="building">
-              <PropertyTable 
-                properties={filteredProperties.filter(p => p.type === '建物' || p.type === '土地及建物')} 
-                onDelete={handleDeleteProperty} 
-                title="建物清冊"
-                description="管理都更會範圍內的建物資料"
-                icon={<Building size={20} className="text-urban-600" />}
-              />
+              {isLoading ? (
+                <div className="flex justify-center py-8 text-muted-foreground">正在載入資料...</div>
+              ) : (
+                <PropertyTable 
+                  properties={filteredProperties.filter(p => p.type === '建物' || p.type === '土地及建物')} 
+                  onDelete={handleDeleteProperty} 
+                  title="建物清冊"
+                  description="管理都更會範圍內的建物資料"
+                  icon={<Building size={20} className="text-urban-600" />}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </TabsContent>
