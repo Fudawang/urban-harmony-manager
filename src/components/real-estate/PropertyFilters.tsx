@@ -60,7 +60,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 <SelectValue placeholder="全部類型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部類型</SelectItem>
+                <SelectItem value="all">全部類型</SelectItem>
                 <SelectItem value="土地">土地</SelectItem>
                 <SelectItem value="建物">建物</SelectItem>
                 <SelectItem value="土地及建物">土地及建物</SelectItem>
@@ -74,7 +74,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 <SelectValue placeholder="全部狀態" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部狀態</SelectItem>
+                <SelectItem value="all">全部狀態</SelectItem>
                 <SelectItem value="更新前">更新前</SelectItem>
                 <SelectItem value="更新後">更新後</SelectItem>
                 <SelectItem value="其他">其他</SelectItem>
