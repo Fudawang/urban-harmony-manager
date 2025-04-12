@@ -253,6 +253,7 @@ export const searchMembers = async (
     
     // Apply search if provided
     if (searchTerm) {
+      // Fix: Use a single string argument with comma-separated conditions
       query = query.or(`member_id.ilike.%${searchTerm}%,name.ilike.%${searchTerm}%,land_number.ilike.%${searchTerm}%,building_number.ilike.%${searchTerm}%,city.ilike.%${searchTerm}%,district.ilike.%${searchTerm}%`);
     }
     
