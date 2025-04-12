@@ -1,24 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { PaginatedResponse } from "@/services/memberService";
+import { Database } from "@/types/database.types";
 
-export type SupabaseMember = {
-  id: string;
-  member_id: string;
-  id_number: string;
-  name: string;
-  city: string;
-  district: string;
-  section: string;
-  sub_section: string;
-  land_number: string;
-  land_share: string;
-  land_area: string;
-  building_number: string;
-  building_share: string;
-  building_area: string;
-  created_at: string;
-};
+export type SupabaseMember = Database['public']['Tables']['members']['Row'];
 
 export type Member = {
   id: string;
@@ -91,7 +76,7 @@ export const generateMemberId = async (): Promise<string> => {
     // Get the count of existing members to determine the next ID
     const { count, error } = await supabase
       .from('members')
-      .select('*', { count: 'exact', head: true });
+      .select('id', { count: 'exact', head: true });
     
     if (error) throw error;
     
@@ -290,7 +275,7 @@ export const searchMembers = async (
     const total = count || 0;
     
     return {
-      data: data.map(convertToMember),
+      data: data.map(item => convertToMember(item as SupabaseMember)),
       total,
       page,
       pageSize,

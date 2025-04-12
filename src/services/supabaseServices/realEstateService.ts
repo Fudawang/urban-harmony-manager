@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PropertyType, PropertyStatus, RealEstateProperty, RealEstateOwner } from "@/types/realEstate";
+import { PropertyType, PropertyStatus, RealEstateProperty, RealEstateOwner, OwnershipType } from "@/types/realEstate";
+import { Database } from "@/types/database.types";
 
 // Real Estate Properties Functions
 export const getProperties = async (): Promise<RealEstateProperty[]> => {
@@ -22,7 +23,7 @@ export const getProperties = async (): Promise<RealEstateProperty[]> => {
       section: item.section,
       number: item.number,
       status: item.status as PropertyStatus,
-      lastUpdated: new Date(item.last_updated).toISOString().split('T')[0]
+      lastUpdated: new Date(item.last_updated || Date.now()).toISOString().split('T')[0]
     }));
   } catch (error) {
     console.error("Error fetching properties:", error);
@@ -51,7 +52,7 @@ export const getPropertyById = async (id: string): Promise<RealEstateProperty | 
       section: data.section,
       number: data.number,
       status: data.status as PropertyStatus,
-      lastUpdated: new Date(data.last_updated).toISOString().split('T')[0]
+      lastUpdated: new Date(data.last_updated || Date.now()).toISOString().split('T')[0]
     };
   } catch (error) {
     console.error("Error fetching property:", error);
@@ -71,7 +72,8 @@ export const createProperty = async (property: Omit<RealEstateProperty, 'id' | '
         district: property.district,
         section: property.section,
         number: property.number,
-        status: property.status
+        status: property.status,
+        last_updated: new Date().toISOString()
       })
       .select()
       .single();
@@ -88,7 +90,7 @@ export const createProperty = async (property: Omit<RealEstateProperty, 'id' | '
       section: data.section,
       number: data.number,
       status: data.status as PropertyStatus,
-      lastUpdated: new Date(data.last_updated).toISOString().split('T')[0]
+      lastUpdated: new Date(data.last_updated || Date.now()).toISOString().split('T')[0]
     };
   } catch (error) {
     console.error("Error creating property:", error);
@@ -127,7 +129,7 @@ export const updateProperty = async (id: string, property: Omit<RealEstateProper
       section: data.section,
       number: data.number,
       status: data.status as PropertyStatus,
-      lastUpdated: new Date(data.last_updated).toISOString().split('T')[0]
+      lastUpdated: new Date(data.last_updated || Date.now()).toISOString().split('T')[0]
     };
   } catch (error) {
     console.error("Error updating property:", error);
@@ -165,8 +167,8 @@ export const getOwners = async (): Promise<RealEstateOwner[]> => {
       idNumber: item.id_number,
       contactInfo: item.contact_info,
       ownershipType: item.ownership_type as OwnershipType,
-      ownershipRatio: item.ownership_ratio,
-      notes: item.notes
+      ownershipRatio: item.ownership_ratio || undefined,
+      notes: item.notes || undefined
     }));
   } catch (error) {
     console.error("Error fetching owners:", error);
@@ -191,8 +193,8 @@ export const getOwnerById = async (id: string): Promise<RealEstateOwner | null> 
       idNumber: data.id_number,
       contactInfo: data.contact_info,
       ownershipType: data.ownership_type as OwnershipType,
-      ownershipRatio: data.ownership_ratio,
-      notes: data.notes
+      ownershipRatio: data.ownership_ratio || undefined,
+      notes: data.notes || undefined
     };
   } catch (error) {
     console.error("Error fetching owner:", error);
@@ -223,8 +225,8 @@ export const createOwner = async (owner: Omit<RealEstateOwner, 'id'>): Promise<R
       idNumber: data.id_number,
       contactInfo: data.contact_info,
       ownershipType: data.ownership_type as OwnershipType,
-      ownershipRatio: data.ownership_ratio,
-      notes: data.notes
+      ownershipRatio: data.ownership_ratio || undefined,
+      notes: data.notes || undefined
     };
   } catch (error) {
     console.error("Error creating owner:", error);
@@ -256,8 +258,8 @@ export const updateOwner = async (id: string, owner: Omit<RealEstateOwner, 'id'>
       idNumber: data.id_number,
       contactInfo: data.contact_info,
       ownershipType: data.ownership_type as OwnershipType,
-      ownershipRatio: data.ownership_ratio,
-      notes: data.notes
+      ownershipRatio: data.ownership_ratio || undefined,
+      notes: data.notes || undefined
     };
   } catch (error) {
     console.error("Error updating owner:", error);

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash, Building, FileText } from "lucide-react";
+import { Pencil, Trash, Building, FileText, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RealEstateProperty } from "@/types/realEstate";
 
@@ -27,6 +27,9 @@ type PropertyTableProps = {
   title?: string;
   description?: string;
   icon?: React.ReactNode;
+  isLoading?: boolean;
+  onEdit?: (property: RealEstateProperty) => void;
+  onView?: (property: RealEstateProperty) => void;
 };
 
 const PropertyTable: React.FC<PropertyTableProps> = ({ 
@@ -34,7 +37,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   onDelete,
   title = "不動產清單",
   description = "管理都更會範圍內的不動產資料",
-  icon = <Building size={20} className="text-urban-600" />
+  icon = <Building size={20} className="text-urban-600" />,
+  isLoading = false,
+  onEdit,
+  onView
 }) => {
   return (
     <Card>
@@ -61,7 +67,16 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {properties.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-6">
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>載入中...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : properties.length > 0 ? (
               properties.map((property) => (
                 <TableRow key={property.id}>
                   <TableCell className="font-medium">{property.address}</TableCell>
@@ -88,22 +103,28 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   <TableCell>{property.lastUpdated}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 px-2"
-                      >
-                        <FileText size={14} />
-                        <span className="sr-only">檢視</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 px-2"
-                      >
-                        <Pencil size={14} />
-                        <span className="sr-only">編輯</span>
-                      </Button>
+                      {onView && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => onView(property)}
+                        >
+                          <FileText size={14} />
+                          <span className="sr-only">檢視</span>
+                        </Button>
+                      )}
+                      {onEdit && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => onEdit(property)}
+                        >
+                          <Pencil size={14} />
+                          <span className="sr-only">編輯</span>
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm"
